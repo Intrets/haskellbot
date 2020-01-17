@@ -37,6 +37,8 @@ executables:
     - bot
     - network
     - transformers
+    - HDBC
+    - HDBC-sqlite3
 
 tests:
   bot-test:
