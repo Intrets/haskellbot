@@ -55,12 +55,6 @@ parseConfigFile path = do
           (getOption "ircOauth")
   return res
 
--- Configuration options
--- myServer = "irc.chat.twitch.tv" :: String
--- myPort = 6667 :: N.PortNumber
--- myChan = "#guardsmanbob" :: String
--- myNick = "bagofemojis" :: String
--- myOath = "   " :: String
 -- Set up actions to run on start and end, and run the main loop
 main :: IO ()
 main = do
