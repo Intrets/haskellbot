@@ -1,5 +1,7 @@
 module Main where
 
+import Bot.Database.Helpers
+
 import Control.Applicative
 import Control.Exception -- base
 import Control.Monad.IO.Class --
@@ -14,6 +16,7 @@ import qualified Network.Socket as N -- network
 import Options.Applicative
 import System.Exit --
 import System.IO --
+import Text.Printf
 
 argparser :: Parser String
 argparser =
@@ -23,7 +26,7 @@ argparser =
 data CLOptions = CLOptions
   { cfgFile :: String
   }
-
+  
 clOptions = CLOptions <$> argparser
 
 clOptionsParser =
@@ -37,6 +40,7 @@ data ProgramOptions = ProgramOptions
   , ircChannel :: String
   , ircNick :: String
   , ircOauth :: String
+  , dbFile :: String
   } deriving (Show)
 
 parseConfigFile :: String -> IO ProgramOptions
@@ -53,6 +57,7 @@ parseConfigFile path = do
           (getOption "ircChannel")
           (getOption "ircNick")
           (getOption "ircOauth")
+          (getOption "dbFile")
   return res
 
 -- Set up actions to run on start and end, and run the main loop
@@ -61,7 +66,9 @@ main = do
   options <- execParser clOptionsParser
   config <- parseConfigFile $ cfgFile options
   bot <- connect (ircServer config) (ircPort config)
-  bracket (pure $ App bot config) disconnect loop
+  let db = Database (dbFile config)
+  initializeDB db
+  bracket (pure $ App bot config db) disconnect loop
   where
     disconnect = hClose . botSocket . bot
     loop st = runReaderT run st
@@ -74,8 +81,12 @@ data Bot = Bot
 data App = App
   { bot :: Bot
   , programOptions :: ProgramOptions
+  , databaseOptions :: Database
   }
 
+
+
+--  givePoints x y z = _givePoints_body
 type Net = ReaderT App IO
 
 -- Connect to the server and return the initial bot state
@@ -144,12 +155,32 @@ listen =
     pong :: String -> Net ()
     pong x = write "PONG" (':' : drop 6 x)
 
+(!?) :: [a] -> Int -> Maybe a
+[] !? _ = Nothing
+(a:rest) !? 0 = Just a
+(a:rest) !? n = rest !? (n - 1)
+
 -- Dispatch a command
 eval :: String -> Net ()
 eval "!test" = privmsg "hello"
 eval "!quit" = write "QUIT" ":Exiting" >> liftIO exitSuccess
 eval x
   | "!id " `isPrefixOf` x = privmsg (drop 4 x)
+  | "!points" `isPrefixOf` x = do
+    case (words x) !? 1 of
+      Nothing -> privmsg "user not found"
+      Just name -> do
+        db <- asks databaseOptions
+        points_ <- liftIO $ getPoints db (Right name)
+        case points_ of
+          Just points -> privmsg $ printf "user %s has %d points" name points
+          Nothing -> privmsg $ printf "user %s not found" name
+  | "!give" `isPrefixOf` x = do
+    case (words x) !? 1 of
+      Nothing -> privmsg "user not found"
+      Just name -> do
+        db <- asks databaseOptions
+        liftIO $ givePoints db 1 name 1
 eval _ = return () -- ignore everything else
 
 -- Send a privmsg to the current chan + server

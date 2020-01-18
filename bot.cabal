@@ -27,19 +27,23 @@ source-repository head
 
 library
   exposed-modules:
-      Lib
-  other-modules:
-      Paths_bot
+                  Bot.Database.Helpers
   hs-source-dirs:
       src
   build-depends:
-      base >=4.7 && <5
+                base >=4.7 && <5
+              , network
+              , transformers
+              , network
+              , HDBC
+              , HDBC-sqlite3 >= 2.3.3.1
+              , optparse-applicative
+              , split
+              , containers
   default-language: Haskell2010
 
 executable bot-exe
   main-is: Main.hs
-  other-modules:
-      Paths_bot
   hs-source-dirs:
       app
   build-depends:
