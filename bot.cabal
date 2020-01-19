@@ -28,6 +28,11 @@ source-repository head
 library
   exposed-modules:
                   Bot.Database.Helpers
+                  Bot.Options.Parse
+                  Bot.Irc.Connection
+                  Bot.Irc.Send
+                  Bot.Irc
+                  Bot
   hs-source-dirs:
       src
   build-depends:
@@ -40,6 +45,13 @@ library
               , optparse-applicative
               , split
               , containers
+              , mtl
+  ghc-options: -Wall
+  default-extensions:
+                     ConstraintKinds
+                   , GeneralizedNewtypeDeriving
+                   , FlexibleContexts
+                     
   default-language: Haskell2010
 
 executable bot-exe
@@ -57,7 +69,8 @@ executable bot-exe
               , optparse-applicative
               , split
               , containers
-              
+              , mtl
+  ghc-options: -Wall
   default-language: Haskell2010
 
 test-suite bot-test
