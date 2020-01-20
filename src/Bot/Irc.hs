@@ -4,11 +4,14 @@ import Bot
 import Bot.Database.Helpers
 import Bot.Irc.Send
 import Bot.Options.Parse
+import Bot.Random
 
 import Control.Monad.Reader
 import Data.List
 import Text.Printf
 import System.IO
+import Text.Read (readMaybe)
+import Data.Maybe (fromMaybe)
 
 botJoin :: App ()
 botJoin = do
@@ -67,6 +70,14 @@ eval x
       Nothing -> privmsg "user not found"
       Just name -> do
         givePoints 1 name 1
+  | "!dicegolf" `isPrefixOf` x = do
+      case (words x) !? 1 of
+        Nothing -> privmsg "user not found"
+        Just start -> do
+          let d = fromMaybe 100 (readMaybe start)
+          result <- dicegolf d
+          privmsg . show $ result
+
   -- | "!delay" `isPrefixOf` x = do
   --   case words x of
   --     (_:delay:msg) -> privmsgDelay (read delay) (unwords msg)

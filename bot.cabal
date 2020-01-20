@@ -32,6 +32,7 @@ library
                   Bot.Irc.Connection
                   Bot.Irc.Send
                   Bot.Irc
+                  Bot.Random
                   Bot
   hs-source-dirs:
       src

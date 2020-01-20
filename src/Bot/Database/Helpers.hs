@@ -43,7 +43,7 @@ givePoints userID name points = do
   liftIO $ Db.commit connection
   liftIO $ Db.disconnect connection
 
-getPoints ::(OptionsConfig m, MonadIO m) => Either Int String -> m (Maybe Int)
+getPoints :: (OptionsConfig m, MonadIO m) => Either Int String -> m (Maybe Int)
 getPoints (Left userID) = do
   connection <- getConnection
   result <-

@@ -1,7 +1,6 @@
 module Main where
 
 import Bot
-import Bot.Database.Helpers
 import Bot.Irc
 import Bot.Irc.Connection
 import Bot.Options.Parse
@@ -11,10 +10,12 @@ import Control.Monad.Reader
 import Control.Monad.State.Strict
 import Options.Applicative
 import System.IO --
+import GHC.IO.Encoding
 import System.Random
 
 main :: IO ()
 main = do
+  setLocaleEncoding utf8
   hSetBuffering stdout NoBuffering
   options <- execParser clOptionsParser
   config <- parseConfigFile $ cfgFile options
