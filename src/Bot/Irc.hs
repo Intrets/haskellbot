@@ -1,14 +1,14 @@
 module Bot.Irc where
 
 import Bot
+import Bot.Database.Helpers
 import Bot.Irc.Send
 import Bot.Options.Parse
-import Bot.Database.Helpers
 
 import Control.Monad.Reader
 import Data.List
-import System.IO
 import Text.Printf
+import System.IO
 
 botJoin :: App ()
 botJoin = do
@@ -19,7 +19,6 @@ botJoin = do
   write "USER" (nick ++ " 0 * :tutorial bot")
   chan <- asks (ircChannel . programOptions)
   write "JOIN" chan
-
 
 listen :: App ()
 listen =
@@ -43,13 +42,10 @@ listen =
     pong :: String -> App ()
     pong x = write "PONG" (':' : drop 6 x)
 
-
 (!?) :: [a] -> Int -> Maybe a
 [] !? _ = Nothing
-(a:rest) !? 0 = Just a
-(a:rest) !? n = rest !? (n - 1)
-
-
+(a:_) !? 0 = Just a
+(_:rest) !? n = rest !? (n - 1)
 
 -- Dispatch a command
 eval :: String -> App ()
@@ -62,7 +58,7 @@ eval x
       Nothing -> privmsg "user not found"
       Just name -> do
         db <- asks databaseOptions
-        points_ <- liftIO $ getPoints db (Right name)
+        points_ <- getPoints (Right name)
         case points_ of
           Just points -> privmsg $ printf "user %s has %d points" name points
           Nothing -> privmsg $ printf "user %s not found" name
@@ -70,7 +66,9 @@ eval x
     case (words x) !? 1 of
       Nothing -> privmsg "user not found"
       Just name -> do
-        db <- asks databaseOptions
-        liftIO $ givePoints db 1 name 1
+        givePoints 1 name 1
+  -- | "!delay" `isPrefixOf` x = do
+  --   case words x of
+  --     (_:delay:msg) -> privmsgDelay (read delay) (unwords msg)
+  --     _ -> return ()
 eval _ = return () -- ignore everything else
-

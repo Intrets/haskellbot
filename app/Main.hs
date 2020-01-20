@@ -1,33 +1,37 @@
-
 module Main where
 
 import Bot
 import Bot.Database.Helpers
+import Bot.Irc
 import Bot.Irc.Connection
 import Bot.Options.Parse
-import Bot.Irc
 
 import Control.Exception -- base
 import Control.Monad.Reader
+import Control.Monad.State.Strict
 import Options.Applicative
 import System.IO --
+import System.Random
 
-
-
--- Set up actions to run on start and end, and run the main loop
 main :: IO ()
 main = do
   hSetBuffering stdout NoBuffering
   options <- execParser clOptionsParser
   config <- parseConfigFile $ cfgFile options
-  bot <- connect (ircServer config) (ircPort config)
+  b <- connect (ircServer config) (ircPort config)
   let db = Database (dbFile config)
-  initializeDB db
-  let options = Options bot config db
-  bracket (pure options) disconnect loop
+  let opt = Options b config db
+  s <- getStdGen
+  bracket (pure opt) disconnect (loop s)
   where
-    disconnect = hClose . botSocket . bot
-    loop st = runReaderT (runApp run) st
+    disconnect options = do
+      putStrLn "disconnecting"
+      hClose . botSocket . bot $ options
+    loop :: StdGen -> Options -> IO ()
+    loop s options = do
+      a <- (flip runReaderT) options . (flip runStateT) s $ runApp run
+      return ()
+    --loop s st = (runReaderT (runApp run) $ st)
 
 run :: App ()
 run = do
