@@ -5,6 +5,7 @@ import Bot.Database.Helpers
 import Bot.Irc.Send
 import Bot.Options.Parse
 import Bot.Random
+import Bot.Catfacts
 
 import Control.Monad.Reader
 import Data.List
@@ -77,6 +78,8 @@ eval x
           let d = fromMaybe 100 (readMaybe start)
           result <- dicegolf d
           privmsg . show $ result
+  | "!fact" `isPrefixOf` x = randomFact >>= privmsg 
+
 
   -- | "!delay" `isPrefixOf` x = do
   --   case words x of

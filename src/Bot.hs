@@ -2,13 +2,14 @@
 
 module Bot where
 
---import Bot.Database.Helpers
 import Bot.Options.Parse
 import Control.Monad.Reader
 import GHC.IO.Handle (Handle)
 
 import Control.Monad.State.Strict
 import System.Random
+
+import qualified Data.Vector as V
 
 data Bot = Bot
   { botSocket :: Handle
@@ -18,6 +19,7 @@ data Options = Options
   { bot :: Bot
   , programOptions :: ProgramOptions
   , databaseOptions :: Database
+  , catFacts :: V.Vector String
   }
 
 data Database = Database
@@ -26,6 +28,8 @@ data Database = Database
 
 type OptionsConfig = MonadReader Options
 
+type RandomGenerator = MonadState StdGen
+
 newtype App a = App
   { runApp :: StateT StdGen (ReaderT Options IO) a
   } deriving ( Monad
@@ -33,8 +37,5 @@ newtype App a = App
              , Applicative
              , OptionsConfig
              , MonadIO
-             , MonadState StdGen
+             , RandomGenerator
              )
--- newtype App a = App
---   { runApp :: ReaderT Options IO a
---   } deriving (Monad, Functor, Applicative, OptionsConfig, MonadIO)

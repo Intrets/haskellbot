@@ -32,6 +32,7 @@ data ProgramOptions = ProgramOptions
   , ircNick :: String
   , ircOauth :: String
   , dbFile :: String
+  , factsFile :: String
   } deriving (Show)
 
 parseConfigFile :: String -> IO ProgramOptions
@@ -49,4 +50,5 @@ parseConfigFile path = do
           (getOption "ircNick")
           (getOption "ircOauth")
           (getOption "dbFile")
+          (getOption "factsFile")
   return res

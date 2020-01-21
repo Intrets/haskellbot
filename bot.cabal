@@ -33,6 +33,7 @@ library
                   Bot.Irc.Send
                   Bot.Irc
                   Bot.Random
+                  Bot.Catfacts
                   Bot
   hs-source-dirs:
       src
@@ -47,6 +48,8 @@ library
               , mtl
               , async
               , random
+              , vector
+              , strict
   ghc-options: -Wall
   default-extensions:
                      ConstraintKinds
@@ -72,6 +75,23 @@ executable bot-exe
               , random
   ghc-options: -Wall
   default-language: Haskell2010
+
+executable conc-exe
+  main-is: Main.hs
+  hs-source-dirs:
+        conc-app 
+  build-depends:
+                base >=4.7 && <5
+              , bot
+              , stm
+              , random
+              , mtl
+  ghc-options: -Wall
+  default-language: Haskell2010
+  default-extensions:
+                     ConstraintKinds
+                   , GeneralizedNewtypeDeriving
+                   , FlexibleContexts
 
 test-suite bot-test
   type: exitcode-stdio-1.0

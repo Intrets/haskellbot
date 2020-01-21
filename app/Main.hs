@@ -4,7 +4,8 @@ import Bot
 import Bot.Irc
 import Bot.Irc.Connection
 import Bot.Options.Parse
-
+import Bot.Catfacts
+  
 import Control.Exception -- base
 import Control.Monad.Reader
 import Control.Monad.State.Strict
@@ -21,8 +22,9 @@ main = do
   config <- parseConfigFile $ cfgFile options
   b <- connect (ircServer config) (ircPort config)
   let db = Database (dbFile config)
-  let opt = Options b config db
   s <- getStdGen
+  catFacts <- loadFacts $ factsFile config 
+  let opt = Options b config db catFacts
   bracket (pure opt) disconnect (loop s)
   where
     disconnect options = do
