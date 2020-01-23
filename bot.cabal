@@ -79,56 +79,6 @@ executable bot-exe
   ghc-options: -Wall
   default-language: Haskell2010
 
-executable conc-exe
-  main-is: Main.hs
-  hs-source-dirs:
-        conc-app 
-  build-depends:
-                base >=4.7 && <5
-              , bot
-              , network
-              , HDBC
-              , HDBC-sqlite3 >= 2.3.3.1
-              , optparse-applicative
-              , split
-              , containers
-              , mtl
-              , random
-              , async
-              , stm
-  ghc-options: -Wall
-  default-language: Haskell2010
-  default-extensions:
-                     ConstraintKinds
-                   , GeneralizedNewtypeDeriving
-                   , FlexibleContexts
-executable conc-new-exe
-  main-is: Mainnew.hs
-  hs-source-dirs:
-        conc-app 
-  build-depends:
-                base >=4.7 && <5
-              , bot
-              , network
-              , HDBC
-              , HDBC-sqlite3 >= 2.3.3.1
-              , optparse-applicative
-              , split
-              , containers
-              , mtl
-              , random
-              , async
-              , stm
-  ghc-options:
-    -Wall  
-    -O2
-  default-language: Haskell2010
-  default-extensions:
-                     ConstraintKinds
-                   , GeneralizedNewtypeDeriving
-                   , FlexibleContexts
-
-
 test-suite bot-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
