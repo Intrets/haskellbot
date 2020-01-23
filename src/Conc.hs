@@ -18,21 +18,24 @@ data Conc p
 
 class Composable n m where
   (>>.) :: (a -> m b) -> Conc n -> (a -> Conc n)
-  end :: (a -> m b) -> (a -> Conc n)
   foreverC :: (a -> m a) -> (a -> Conc n)
   foreverC_ :: (() -> m ()) -> Conc n
 
 instance Composable n IO where
   (>>.) x y a = IOtask $ do x a >> return y
-  end x a = IOtask $ do x a >> return End
   foreverC x = x >>- foreverC x
   foreverC_ x = foreverC x ()
 
+endIO :: IO a -> Conc n
+endIO x = IOtask $ do x >> return End
+
 instance (Monad n) => Composable n n where
   (>>.) x y a = Pure $ do x a >> return y
-  end x a = Pure $ do x a >> return End
   foreverC x = x >>+ foreverC x
   foreverC_ x = foreverC x ()
+
+end :: Monad n => n a -> Conc n
+end x = Pure $ do x >> return End
 
 startPure :: (Monad n) => n b -> (b -> Conc n) -> Conc n
 startPure x y = Pure $ do x >>= return . y

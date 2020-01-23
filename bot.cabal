@@ -53,13 +53,12 @@ library
               , strict
               , stm
               , text
-              
   ghc-options: -Wall
   default-extensions:
                      ConstraintKinds
                    , GeneralizedNewtypeDeriving
                    , FlexibleContexts
-                     
+                   , OverloadedStrings  
   default-language: Haskell2010
 
 executable bot-exe
@@ -77,6 +76,7 @@ executable bot-exe
               , containers
               , mtl
               , random
+              , text
   ghc-options: -Wall
   default-language: Haskell2010
 

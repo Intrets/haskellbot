@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 module Main where
 
 import Bot
@@ -13,6 +14,7 @@ import GHC.IO.Encoding
 import Options.Applicative
 import System.IO --
 import System.Random
+import qualified Data.Text as T (unpack)
 
 import Conc
 
@@ -22,7 +24,7 @@ main = do
   --hSetBuffering stdout NoBuffering
   options <- execParser clOptionsParser
   config <- parseConfigFile $ cfgFile options
-  b <- connect (ircServer config) (ircPort config)
+  b <- connect (T.unpack $ ircServer config) (ircPort config)
   let db = Database (dbFile config)
   s <- getStdGen
   catFacts <- loadFacts $ factsFile config

@@ -1,19 +1,23 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Bot.Options.Parse where
 
+import Bot
 import qualified Data.Map as Map
 import Data.Monoid ((<>))
-import qualified Network.Socket as N
 import Options.Applicative
-import System.IO
-import Data.List.Split (splitOn)
 
-argparser :: Parser String
+import qualified Data.Text as T
+import qualified Data.Text.IO as T
+
+argparser :: Parser StringType
 argparser =
+  T.pack <$>
   strOption
     (long "config" <> short 'c' <> metavar "CONFIGFILE" <> value "default.cfg")
 
 data CLOptions = CLOptions
-  { cfgFile :: String
+  { cfgFile :: StringType
   }
 
 clOptions :: Parser CLOptions
@@ -25,27 +29,16 @@ clOptionsParser =
     (clOptions <**> helper)
     (fullDesc <> progDesc "chat bot test" <> header "this is a header")
 
-data ProgramOptions = ProgramOptions
-  { ircServer :: String
-  , ircPort :: N.PortNumber
-  , ircChannel :: String
-  , ircNick :: String
-  , ircOauth :: String
-  , dbFile :: String
-  , factsFile :: String
-  } deriving (Show)
-
-parseConfigFile :: String -> IO ProgramOptions
+parseConfigFile :: StringType -> IO ProgramOptions
 parseConfigFile path = do
-  file <- openFile path ReadMode
-  contents <- lines <$> hGetContents file
+  contents <- T.lines <$> T.readFile (T.unpack path)
   let getOption =
-        (Map.!) . Map.fromList . map ((\[a, b] -> (a, b)) . splitOn "=") $
+        (Map.!) . Map.fromList . map ((\[a, b] -> (a, b)) . T.splitOn "=") $
         contents
   let res =
         ProgramOptions
           (getOption "ircServer")
-          (read $ getOption "ircPort")
+          (read . T.unpack $ getOption "ircPort")
           (getOption "ircChannel")
           (getOption "ircNick")
           (getOption "ircOauth")
