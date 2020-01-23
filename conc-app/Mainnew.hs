@@ -256,6 +256,7 @@ main = do
 leakTest4 :: Conc App
 leakTest4 = foreverC_ (const $ threadDelay 1)
 
+
 leakTest :: Conc App
 leakTest =
   (threadDelay 1) $.

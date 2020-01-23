@@ -27,6 +27,7 @@ source-repository head
 
 library
   exposed-modules:
+                  Conc
                   Bot.Database.Helpers
                   Bot.Options.Parse
                   Bot.Irc.Connection
@@ -50,6 +51,8 @@ library
               , random
               , vector
               , strict
+              , stm
+              
   ghc-options: -Wall
   default-extensions:
                      ConstraintKinds

@@ -28,10 +28,10 @@ data Database = Database
 
 type OptionsConfig = MonadReader Options
 
-type RandomGenerator = MonadState Int 
+type RandomGenerator = MonadState StdGen 
 
 newtype App a = App
-  { runApp :: StateT Int (ReaderT Options IO) a
+  { runApp :: StateT StdGen (ReaderT Options IO) a
   } deriving ( Monad
              , Functor
              , Applicative

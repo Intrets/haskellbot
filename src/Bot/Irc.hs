@@ -1,18 +1,21 @@
 module Bot.Irc where
 
 import Bot
+import Bot.Catfacts
 import Bot.Database.Helpers
 import Bot.Irc.Send
 import Bot.Options.Parse
 import Bot.Random
-import Bot.Catfacts
 
+import Conc
 import Control.Monad.Reader
 import Data.List
-import Text.Printf
-import System.IO
-import Text.Read (readMaybe)
 import Data.Maybe (fromMaybe)
+import System.IO
+import Text.Printf
+import Text.Read (readMaybe)
+
+import Data.Function ((&))
 
 botJoin :: App ()
 botJoin = do
@@ -24,7 +27,6 @@ botJoin = do
   chan <- asks (ircChannel . programOptions)
   write "JOIN" chan
 
-  
 listen :: App ()
 listen =
   forever $ do
@@ -46,6 +48,15 @@ listen =
     isPing x = "PING :" `isPrefixOf` x
     pong :: String -> App ()
     pong x = write "PONG" (':' : drop 6 x)
+
+listen2 :: Conc App
+listen2 =
+  1 & const (asks (botSocket . bot)) >>+ hGetLine >>-  [listen2] >>< 
+  (\s ->
+     if ("PING :" `isPrefixOf` s)
+       then print "pong"
+       else print "other") >>-
+  const End 
 
 (!?) :: [a] -> Int -> Maybe a
 [] !? _ = Nothing
@@ -79,9 +90,7 @@ eval x
   --         let d = fromMaybe 100 (readMaybe start)
   --         result <- dicegolf d
   --         privmsg . show $ result
-  -- | "!fact" `isPrefixOf` x = randomFact >>= privmsg 
-
-
+  -- | "!fact" `isPrefixOf` x = randomFact >>= privmsg
   -- | "!delay" `isPrefixOf` x = do
   --   case words x of
   --     (_:delay:msg) -> privmsgDelay (read delay) (unwords msg)

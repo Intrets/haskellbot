@@ -1,29 +1,31 @@
 module Main where
 
 import Bot
+import Bot.Catfacts
 import Bot.Irc
 import Bot.Irc.Connection
 import Bot.Options.Parse
-import Bot.Catfacts
-  
+
 import Control.Exception -- base
 import Control.Monad.Reader
 import Control.Monad.State.Strict
+import GHC.IO.Encoding
 import Options.Applicative
 import System.IO --
-import GHC.IO.Encoding
 import System.Random
+
+import Conc
 
 main :: IO ()
 main = do
   setLocaleEncoding utf8
-  hSetBuffering stdout NoBuffering
+  --hSetBuffering stdout NoBuffering
   options <- execParser clOptionsParser
   config <- parseConfigFile $ cfgFile options
   b <- connect (ircServer config) (ircPort config)
   let db = Database (dbFile config)
   s <- getStdGen
-  catFacts <- loadFacts $ factsFile config 
+  catFacts <- loadFacts $ factsFile config
   let opt = Options b config db catFacts
   bracket (pure opt) disconnect (loop s)
   where
@@ -39,4 +41,4 @@ main = do
 run :: App ()
 run = do
   botJoin
-  listen
+  runConc [listen2]
