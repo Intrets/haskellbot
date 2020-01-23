@@ -18,5 +18,5 @@ loadFacts path = do
 randomFact :: (RandomGenerator m, OptionsConfig m) => m String
 randomFact = do
   facts <- asks catFacts
-  index <- randRange 0 ((\(a,b) -> b - a) $ A.bounds facts)
+  index <- (uncurry randRange  (A.bounds facts)) 
   return $ facts A.! index
