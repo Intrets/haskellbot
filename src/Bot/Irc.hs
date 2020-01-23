@@ -49,14 +49,20 @@ listen =
     pong :: String -> App ()
     pong x = write "PONG" (':' : drop 6 x)
 
+pong :: String -> App ()
+pong x = write "PONG" (':' : drop 6 x)
+
+clean :: String -> String
+clean = drop 1 . dropWhile (/= ':') . drop 1
+
 listen2 :: Conc App
 listen2 =
-  1 & const (asks (botSocket . bot)) >>+ hGetLine >>-  [listen2] >>< 
+  1 & const (asks (botSocket . bot)) >>+ hGetLine >>- [listen2] >><
   (\s ->
      if ("PING :" `isPrefixOf` s)
-       then print "pong"
-       else print "other") >>-
-  const End 
+       then pong s
+       else eval (clean s)) >>+
+  const End
 
 (!?) :: [a] -> Int -> Maybe a
 [] !? _ = Nothing
@@ -83,14 +89,14 @@ eval x
       Nothing -> privmsg "user not found"
       Just name -> do
         givePoints 1 name 1
-  -- | "!dicegolf" `isPrefixOf` x = do
-  --     case (words x) !? 1 of
-  --       Nothing -> privmsg "user not found"
-  --       Just start -> do
-  --         let d = fromMaybe 100 (readMaybe start)
-  --         result <- dicegolf d
-  --         privmsg . show $ result
-  -- | "!fact" `isPrefixOf` x = randomFact >>= privmsg
+  | "!dicegolf" `isPrefixOf` x = do
+      case (words x) !? 1 of
+        Nothing -> privmsg "user not found"
+        Just start -> do
+          let d = fromMaybe 100 (readMaybe start)
+          result <- dicegolf d
+          privmsg . show $ result
+  | "!fact" `isPrefixOf` x = randomFact >>= privmsg
   -- | "!delay" `isPrefixOf` x = do
   --   case words x of
   --     (_:delay:msg) -> privmsgDelay (read delay) (unwords msg)
