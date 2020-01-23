@@ -52,6 +52,7 @@ library
               , array
               , strict
               , stm
+              , text
               
   ghc-options: -Wall
   default-extensions:

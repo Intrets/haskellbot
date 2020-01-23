@@ -7,11 +7,12 @@ import Control.Monad.Reader
 import qualified Data.Array as A
 import System.IO hiding (hGetContents)
 import System.IO.Strict (hGetContents)
+import Data.Text (strip, pack, unpack)
 
 loadFacts :: String -> IO (A.Array Int String)
 loadFacts path = do
   file <- openFile path ReadMode
-  facts <- filter (not . null) . lines <$> hGetContents file
+  facts <- filter (not . null) . map (unpack . strip . pack) . lines <$> hGetContents file
   hClose file
   return . A.listArray (0, pred . length $ facts) $ facts
 
