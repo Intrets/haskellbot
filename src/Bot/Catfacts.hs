@@ -15,8 +15,12 @@ loadFacts path = do
   hClose file
   return . A.listArray (0, pred . length $ facts) $ facts
 
-randomFact :: (RandomGenerator m, OptionsConfig m) => m String
+randomFact :: (MonadIO m, RandomGenerator m, OptionsConfig m) => m String
 randomFact = do
   facts <- asks catFacts
-  index <- (uncurry randRange  (A.bounds facts)) 
+  index <- (uncurry randRange (A.bounds facts))
+  liftIO $ do
+    print (A.bounds facts)
+    print index
+    
   return $ facts A.! index
