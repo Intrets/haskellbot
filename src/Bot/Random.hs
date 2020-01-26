@@ -5,18 +5,16 @@ import Bot
 import Control.Monad.State.Strict
 import System.Random
 
-stateTest :: (MonadState Int m) => m Int 
-stateTest = do
-  c <- get
-  put . succ $ c
-  return c
+class (Monad m) =>
+      RandomGenerator m where
+  randRange :: (Num a, Ord a, Random a) => a -> a -> m a
 
-randRange :: (Random a, Num a, Ord a, RandomGenerator m) => a -> a -> m a
-randRange low high
-  | low > high = pure low
-  | otherwise = state $ randomR (low, high)
+instance RandomGenerator App where
+  randRange low high
+    | low > high = App $ pure low
+    | otherwise = App . lift . lift $ (state $ randomR (low, high))
 
-dicegolf :: (MonadState StdGen m) => Int -> m [Int]
+dicegolf :: (RandomGenerator m) => Int -> m [Int]
 dicegolf 1 = return [1]
 dicegolf d = do
   roll <- randRange 1 d

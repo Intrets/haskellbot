@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+
 module Main where
 
 import Bot
@@ -6,15 +7,17 @@ import Bot.Catfacts
 import Bot.Irc
 import Bot.Irc.Connection
 import Bot.Options.Parse
+import Command.Commands
 
 import Control.Exception -- base
 import Control.Monad.Reader
 import Control.Monad.State.Strict
+import qualified Data.HashMap.Strict as M
+import qualified Data.Text as T (unpack)
 import GHC.IO.Encoding
 import Options.Applicative
 import System.IO --
 import System.Random
-import qualified Data.Text as T (unpack)
 
 import Conc
 
@@ -36,7 +39,12 @@ main = do
       hClose . botSocket . bot $ options
     loop :: StdGen -> Options -> IO ()
     loop s options = do
-      a <- (flip runReaderT) options . (flip runStateT) s $ runApp run
+      a <-
+        (flip runStateT) simpleCommands .
+        (flip runStateT) M.empty .
+        (flip runStateT) s .
+        (flip runStateT) M.empty . (flip runReaderT) options $
+        runApp run
       return ()
     --loop s st = (runReaderT (runApp run) $ st)
 

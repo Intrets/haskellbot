@@ -36,6 +36,8 @@ library
                   Bot.Random
                   Bot.Catfacts
                   Bot
+                  Command
+                  Command.Commands
   hs-source-dirs:
       src
   build-depends:
@@ -53,6 +55,8 @@ library
               , strict
               , stm
               , text
+              , unordered-containers
+              , hashable
   ghc-options: -Wall
   default-extensions:
                      ConstraintKinds
@@ -77,6 +81,7 @@ executable bot-exe
               , mtl
               , random
               , text
+              , unordered-containers
   ghc-options: -Wall
   default-language: Haskell2010
 

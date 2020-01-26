@@ -49,10 +49,6 @@ listen2 =
        then end $ pong s
        else evalC (clean s))
 
-(!?) :: [a] -> Int -> Maybe a
-[] !? _ = Nothing
-(a:_) !? 0 = Just a
-(_:rest) !? n = rest !? (n - 1)
 
 evalC :: StringType -> Conc App
 evalC "!test" = end $ (privmsg "test" :: App ())
