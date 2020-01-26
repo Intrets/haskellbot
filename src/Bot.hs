@@ -8,6 +8,7 @@ import qualified Data.HashMap.Strict as M
 import Data.Hashable
 import GHC.IO.Handle (Handle)
 import qualified Network.Socket as N (PortNumber)
+import Queue
 
 import Control.Monad.State.Strict
 import System.Random
@@ -15,6 +16,7 @@ import System.Random
 import qualified Data.Text as T (Text)
 
 import qualified Data.Array as A
+import Data.Time.Clock.POSIX
 
 data Bot = Bot
   { botSocket :: Handle
@@ -54,16 +56,16 @@ instance Hashable User where
   hashWithSalt salt = hashWithSalt salt . userID
 
 data Message = Message
-  { messageWords :: [StringType]
-  , user :: User
+  { messageWords :: ![StringType]
+  , user :: !User
   } deriving (Show)
 
 data CommandOptions = CommandOptions
-  { userCooldown :: Int
-  , globalCooldown :: Int
-  , requireUserCooldown :: Bool
-  , requireGlobalCooldown :: Bool
-  , idVerification :: Int -> Bool
+  { userCooldown :: !Int
+  , globalCooldown :: !Int
+  , requireUserCooldown :: !Bool
+  , requireGlobalCooldown :: !Bool
+  , idVerification :: !(Int -> Bool)
   }
 
 data Command a = Command
@@ -79,8 +81,13 @@ type UserCooldowns = M.HashMap User Int
 
 type Commands = M.HashMap StringType (Command App)
 
+data MessageQueue = MessageQueue
+  { lastMessage :: !POSIXTime
+  , queue :: !(Queue StringType)
+  }
+
 newtype App a = App
-  { runApp :: ReaderT Options (StateT CommandCooldowns (StateT StdGen (StateT UserCooldowns (StateT Commands IO)))) a
+  { runApp :: ReaderT Options (StateT CommandCooldowns (StateT StdGen (StateT UserCooldowns (StateT Commands (StateT MessageQueue IO))))) a
   } deriving (Monad, Functor, Applicative, OptionsConfig, MonadIO)
 
 (!?) :: [a] -> Int -> Maybe a

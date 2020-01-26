@@ -16,7 +16,6 @@ import qualified Data.Text as T
        (Text, drop, dropWhile, isPrefixOf, pack, strip, unpack, words)
 import qualified Data.Text.IO as T (hGetLine)
 
-
 clean :: StringType -> StringType
 clean = T.strip . T.drop 1 . T.dropWhile (/= ':') . T.drop 1
 
@@ -29,11 +28,10 @@ listen2 =
        else evalC (clean s))
 
 evalC :: StringType -> Conc App
-evalC "!test" = end $ (privmsg "test" :: App ())
 evalC "!quit" = end $ quit
 evalC msg = runCommand message
   where
-    message = Message (T.words msg) (User 1 "test_user_name")
+    message = Message (T.words . T.strip $ msg) (User 1 "test_user_name")
     t = 1
   -- | "!id" `T.isPrefixOf` msg = end $ privmsg (T.drop 4 msg)
   -- | "!points" `T.isPrefixOf` msg =
@@ -64,4 +62,3 @@ evalC msg = runCommand message
   --     Nothing -> End
   --     Just c -> end $ privmsgS . show . TE.encodeUtf8 $ c
   -- | otherwise = End
-

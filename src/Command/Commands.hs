@@ -2,17 +2,21 @@ module Command.Commands where
 
 import Bot
 
+import Bot.Catfacts
 import Bot.Irc.Send
 import Bot.Random
 import Command
 import Conc
 import Data.Function ((&))
+import Data.List (intercalate)
 import Data.Maybe (fromMaybe)
 import Data.Monoid ((<>))
 import qualified Data.Text as T (pack, unpack, words)
 import qualified Data.Text.Encoding as TE
+import MessageQueue
 import Text.Read (readMaybe)
-import Data.List (intercalate)
+
+import Network.HTTP.Client
 
 import qualified Data.HashMap.Strict as M
 
@@ -39,16 +43,40 @@ commandList =
       ["!dicegolf"]
       (CommandOptions 2 2 True True (const True))
       dicegolfCommand
+  , Command
+      "roll a die"
+      ["!d"]
+      (CommandOptions 2 2 True True (const True))
+      rollDie
+  , Command
+      "facts"
+      ["!fact", "!f", "forsenScoots", "OMGScoots"]
+      (CommandOptions 2 2 True True (const True))
+      (const randomFactCommand)
   ]
 
-dicegolfCommand :: (Composable n App, RandomGenerator n) => Message -> Conc n
+randomFactCommand :: Conc App
+randomFactCommand =
+  Pure $ do
+    fact <- randomFact
+    queueMessage fact
+    return End
+
+dicegolfCommand :: Message -> Conc App
 dicegolfCommand (Message msg _) =
+  (end $ do
+     result <- dicegolf . fromMaybe 100 $ (readMaybe . T.unpack) =<< (msg !? 1)
+     queueMessage . formatDicegolfResult $ result)
+
+rollDie :: (Composable n App, RandomGenerator n) => Message -> Conc n
+rollDie (Message msg _) =
   () &
   (const $
    case msg !? 1 of
-     Nothing -> dicegolf 100
-     Just start -> dicegolf (fromMaybe 100 . readMaybe . T.unpack $ start)) >>+
-  (privmsg . formatDicegolfResult :: [Int] -> App ()) >>.
+     Nothing -> randRange (1 :: Int) 20
+     Just start ->
+       randRange (1 :: Int) (fromMaybe 20 . readMaybe . T.unpack $ start)) >>+
+  (privmsg . T.pack . show :: Int -> App ()) >>.
   End
 
 golf :: StringType

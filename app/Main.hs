@@ -5,10 +5,11 @@ module Main where
 import Bot
 import Bot.Catfacts
 import Bot.Irc
-import Bot.Irc.Send
 import Bot.Irc.Connection
+import Bot.Irc.Send
 import Bot.Options.Parse
 import Command.Commands
+import MessageQueue
 
 import Control.Exception -- base
 import Control.Monad.Reader
@@ -17,10 +18,14 @@ import qualified Data.HashMap.Strict as M
 import qualified Data.Text as T (unpack)
 import GHC.IO.Encoding
 import Options.Applicative
+import Queue
 import System.IO --
 import System.Random
 
 import Conc
+
+messageQueue :: MessageQueue
+messageQueue = MessageQueue 0 emptyQueue
 
 main :: IO ()
 main = do
@@ -41,6 +46,7 @@ main = do
     loop :: StdGen -> Options -> IO ()
     loop s options = do
       a <-
+        (flip runStateT) messageQueue .
         (flip runStateT) simpleCommands .
         (flip runStateT) M.empty .
         (flip runStateT) s .
@@ -52,4 +58,4 @@ main = do
 run :: App ()
 run = do
   botJoin
-  runConc [listen2]
+  runConc [listen2, messageDispensingLoop]

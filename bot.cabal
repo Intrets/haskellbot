@@ -36,6 +36,8 @@ library
                   Bot.Random
                   Bot.Catfacts
                   Bot
+                  Queue
+                  MessageQueue
                   Command
                   Command.Commands
   hs-source-dirs:
@@ -57,6 +59,8 @@ library
               , text
               , unordered-containers
               , hashable
+              , http-client
+              , time
   ghc-options: -Wall
   default-extensions:
                      ConstraintKinds
