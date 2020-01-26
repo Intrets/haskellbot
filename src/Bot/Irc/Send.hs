@@ -1,9 +1,12 @@
 {-# LANGUAGE OverloadedStrings #-}
+
 module Bot.Irc.Send
   ( privmsg
   , privmsgS
   , write
   , quit
+  , pong
+  , botJoin
   ) where
 
 import Bot
@@ -28,7 +31,6 @@ privmsg msg = do
   chan <- asks (ircChannel . programOptions)
   write "PRIVMSG" (chan <> " :" <> msg)
 
-
 privmsgS :: (OptionsConfig m, MonadIO m) => String -> m ()
 privmsgS = privmsg . T.pack
 
@@ -42,3 +44,16 @@ write cmd args = do
 
 quit :: App ()
 quit = write "QUIT" ":Exiting" >> liftIO exitSuccess
+
+botJoin :: App ()
+botJoin = do
+  oauth <- asks (ircOauth . programOptions)
+  write "PASS" ("oauth:" <> oauth)
+  nick <- asks (ircNick . programOptions)
+  write "NICK" nick
+  write "USER" (nick <> " 0 * :tutorial bot")
+  chan <- asks (ircChannel . programOptions)
+  write "JOIN" chan
+
+pong :: StringType -> App ()
+pong x = write "PONG" (":" <> T.drop 6 x)

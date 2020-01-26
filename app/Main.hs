@@ -5,6 +5,7 @@ module Main where
 import Bot
 import Bot.Catfacts
 import Bot.Irc
+import Bot.Irc.Send
 import Bot.Irc.Connection
 import Bot.Options.Parse
 import Command.Commands
