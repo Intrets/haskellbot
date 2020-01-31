@@ -27,6 +27,7 @@ source-repository head
 
 library
   exposed-modules:
+                  MarkovChain
                   Conc
                   Bot.Database.Helpers
                   Bot.Options.Parse
@@ -40,6 +41,8 @@ library
                   MessageQueue
                   Command
                   Command.Commands
+                  Command.RenameUtils
+                  Command.CursedCommand
   hs-source-dirs:
       src
   build-depends:
@@ -60,7 +63,10 @@ library
               , unordered-containers
               , hashable
               , http-client
+              , http-client-tls
+              , http-types
               , time
+              , aeson
   ghc-options: -Wall
   default-extensions:
                      ConstraintKinds

@@ -22,38 +22,38 @@ class Composable n m where
   foreverC_ :: (() -> m ()) -> Conc n
 
 instance Composable n IO where
-  (>>.) x y a = IOtask $ do x a >> return y
+  (>>.) x y a = IOtask $ x a >> return y
   foreverC x = x >>- foreverC x
   foreverC_ x = foreverC x ()
 
 endIO :: IO a -> Conc n
-endIO x = IOtask $ do x >> return End
+endIO x = IOtask $ x >> return End
 
 instance (Monad n) => Composable n n where
-  (>>.) x y a = Pure $ do x a >> return y
+  (>>.) x y a = Pure $ x a >> return y
   foreverC x = x >>+ foreverC x
   foreverC_ x = foreverC x ()
 
 end :: Monad n => n a -> Conc n
-end x = Pure $ do x >> return End
+end x = Pure $ x >> return End
 
 startPure :: (Monad n) => n b -> (b -> Conc n) -> Conc n
-startPure x y = Pure $ do x >>= return . y
+startPure x y = Pure $ y <$> x
 
 startIO :: IO b -> (b -> Conc n) -> Conc n
-startIO x y = IOtask $ do x >>= return . y
+startIO x y = IOtask $ y <$> x
 
-(>><) ::[Conc n] -> (b -> Conc n) -> (b -> Conc n)
-(>><) list x = (Fork list) . x
+(>><) :: [Conc n] -> (b -> Conc n) -> (b -> Conc n)
+(>><) list x = Fork list . x
 
 infixr 2 >><
 
 -- (Conc n -> Conc n) -> (b -> Conc n) -> (b -> Conc n)
 (>>-) :: (a -> IO b) -> (b -> Conc n) -> (a -> Conc n)
-(>>-) x y a = IOtask $ do x a >>= return . y
+(>>-) x y a = IOtask $ y <$> x a
 
 (>>+) :: (Monad n) => (a -> n b) -> (b -> Conc n) -> (a -> Conc n)
-(>>+) x y a = Pure $ do x a >>= return . y
+(>>+) x y a = Pure $ y <$> x a
 
 infixr 2 >>-
 
@@ -65,21 +65,19 @@ runConc :: (Monad a, MonadIO a) => [Conc a] -> a ()
 runConc q_ = do
   queue <- liftIO $ atomically $ newTVar q_
   go queue
-  where
-    go queue = do
-      q <- liftIO $ atomically $ readTVar queue <* writeTVar queue []
-      case q of
-        [] -> liftIO $ threadDelay 10
-        _ -> do
-          forM_ q $ \case
-            End -> return ()
-            IOtask io -> do
-              void . liftIO . forkIO $ do
-                a <- io
-                atomically $ modifyTVar queue (a :)
-            Pure p -> do
-              a <- p
-              liftIO $ atomically $ modifyTVar queue (a :)
-            Fork group next -> do
-              liftIO $ atomically $ modifyTVar queue ((next : group) ++ )
-      go queue
+ where
+  go queue = do
+    q <- liftIO $ atomically $ readTVar queue <* writeTVar queue []
+    case q of
+      [] -> liftIO $ threadDelay 10
+      _  -> forM_ q $ \case
+        End       -> return ()
+        IOtask io -> void . liftIO . forkIO $ do
+          a <- io
+          atomically $ modifyTVar queue (a :)
+        Pure p -> do
+          a <- p
+          liftIO $ atomically $ modifyTVar queue (a :)
+        Fork group next ->
+          liftIO $ atomically $ modifyTVar queue ((next : group) ++)
+    go queue

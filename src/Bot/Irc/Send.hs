@@ -57,6 +57,3 @@ botJoin = do
 
 pong :: StringType -> App ()
 pong x = write "PONG" (":" <> T.drop 6 x)
-
-queueMessage :: Message -> Conc App
-queueMessage message = End

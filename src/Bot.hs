@@ -18,7 +18,8 @@ import qualified Data.Text as T (Text)
 import qualified Data.Array as A
 import Data.Time.Clock.POSIX
 
-data Bot = Bot
+
+newtype Bot = Bot
   { botSocket :: Handle
   }
 
@@ -39,7 +40,7 @@ data ProgramOptions = ProgramOptions
   , factsFile :: StringType
   } deriving (Show)
 
-data Database = Database
+newtype Database = Database
   { path :: StringType
   } deriving (Show)
 
@@ -61,8 +62,8 @@ data Message = Message
   } deriving (Show)
 
 data CommandOptions = CommandOptions
-  { userCooldown :: !Int
-  , globalCooldown :: !Int
+  { userCooldown :: !POSIXTime
+  , globalCooldown :: !POSIXTime
   , requireUserCooldown :: !Bool
   , requireGlobalCooldown :: !Bool
   , idVerification :: !(Int -> Bool)
@@ -75,9 +76,9 @@ data Command a = Command
   , action :: Message -> Conc a
   }
 
-type CommandCooldowns = M.HashMap StringType Int
+type CommandCooldowns = M.HashMap StringType POSIXTime
 
-type UserCooldowns = M.HashMap User Int
+type UserCooldowns = M.HashMap User POSIXTime
 
 type Commands = M.HashMap StringType (Command App)
 
@@ -91,6 +92,6 @@ newtype App a = App
   } deriving (Monad, Functor, Applicative, OptionsConfig, MonadIO)
 
 (!?) :: [a] -> Int -> Maybe a
-[] !? _ = Nothing
-(a:_) !? 0 = Just a
-(_:rest) !? n = rest !? (n - 1)
+[]         !? _ = Nothing
+(a : _   ) !? 0 = Just a
+(_ : rest) !? n = rest !? (n - 1)
