@@ -67,7 +67,7 @@ library
               , http-types
               , time
               , aeson
-  ghc-options: -Wall
+  ghc-options: -Wall -O2
   default-extensions:
                      ConstraintKinds
                    , GeneralizedNewtypeDeriving
