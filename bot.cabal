@@ -67,7 +67,7 @@ library
               , http-types
               , time
               , aeson
-  ghc-options: -Wall -O2 -withrtsopts
+  ghc-options: -Wall -O2 -with-rtsopts
   default-extensions:
                      ConstraintKinds
                    , GeneralizedNewtypeDeriving
@@ -92,7 +92,7 @@ executable bot-exe
               , random
               , text
               , unordered-containers
-  ghc-options: -Wall -O2 -withrtsopts
+  ghc-options: -Wall -O2 -with-rtsopts
   default-language: Haskell2010
 
 test-suite bot-test
