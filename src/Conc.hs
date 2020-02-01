@@ -69,7 +69,7 @@ runConc q_ = do
   go queue = do
     q <- liftIO $ atomically $ readTVar queue <* writeTVar queue []
     case q of
-      [] -> liftIO $ threadDelay 10
+      [] -> liftIO $ threadDelay 1000
       _  -> forM_ q $ \case
         End       -> return ()
         IOtask io -> void . liftIO . forkIO $ do

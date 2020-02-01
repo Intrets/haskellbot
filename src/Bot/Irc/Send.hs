@@ -7,7 +7,8 @@ module Bot.Irc.Send
   , quit
   , pong
   , botJoin
-  ) where
+  )
+where
 
 import Bot
 import Bot.Options.Parse

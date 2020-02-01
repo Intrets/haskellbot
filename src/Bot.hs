@@ -18,7 +18,6 @@ import qualified Data.Text as T (Text)
 import qualified Data.Array as A
 import Data.Time.Clock.POSIX
 
-test = 1
 newtype Bot = Bot
   { botSocket :: Handle
   }
