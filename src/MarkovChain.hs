@@ -1,6 +1,5 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE DatatypeContexts #-}
 
 module MarkovChain where
 
@@ -32,7 +31,7 @@ cleanWord :: StringType -> StringType
 cleanWord = T.filter isAlphaNum
 
 makeRawWordsIndex :: [StringType] -> Indexed StringType Int
-makeRawWordsIndex words = Indexed (flip M.lookup toIndexMap) (fromIndexMap A.!)
+makeRawWordsIndex words = Indexed (`M.lookup` toIndexMap) (fromIndexMap A.!)
  where
   toIndexMap   = M.fromList $ zip words [0 ..]
   fromIndexMap = A.listArray (0, pred . M.size $ toIndexMap) words

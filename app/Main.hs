@@ -32,29 +32,30 @@ main = do
   setLocaleEncoding utf8
   --hSetBuffering stdout NoBuffering
   options <- execParser clOptionsParser
-  config <- parseConfigFile $ cfgFile options
-  b <- connect (T.unpack $ ircServer config) (ircPort config)
+  config  <- parseConfigFile $ cfgFile options
+  b       <- connect (T.unpack $ ircServer config) (ircPort config)
   let db = Database (dbFile config)
-  s <- getStdGen
+  s        <- getStdGen
   catFacts <- loadFacts $ factsFile config
   let opt = Options b config db catFacts
   bracket (pure opt) disconnect (loop s)
-  where
-    disconnect options = do
-      putStrLn "disconnecting"
-      hClose . botSocket . bot $ options
-    loop :: StdGen -> Options -> IO ()
-    loop s options = do
-      a <-
-        (flip runStateT) messageQueue .
-        (flip runStateT) simpleCommands .
-        (flip runStateT) M.empty .
-        (flip runStateT) s .
-        (flip runStateT) M.empty . (flip runReaderT) options $
-        runApp run
-      return ()
+ where
+  disconnect options = do
+    putStrLn "disconnecting"
+    hClose . botSocket . bot $ options
+  loop :: StdGen -> Options -> IO ()
+  loop s options = do
+    a <-
+      (flip runStateT) messageQueue
+      . (flip runStateT) simpleCommands
+      . (flip runStateT) M.empty
+      . (flip runStateT) s
+      . (flip runStateT) M.empty
+      . (flip runReaderT) options
+      $ runApp run
+    return ()
     --loop s st = (runReaderT (runApp run) $ st)
-
+test = 1
 run :: App ()
 run = do
   botJoin

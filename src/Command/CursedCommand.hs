@@ -1,6 +1,6 @@
 {-# LANGUAGE ViewPatterns #-}
-{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE DeriveGeneric #-}
 
 module Command.CursedCommand
   ( FactDbResponse()
@@ -9,11 +9,11 @@ module Command.CursedCommand
   )
 where
 
+import GHC.Generics
 import Bot
 import Command.RenameUtils
 import Conc
 import Data.Aeson
-import Data.Aeson.TH
 
 import Network.HTTP.Client
 import Network.HTTP.Client.TLS
@@ -39,12 +39,10 @@ dubiousFact = IOtask $ do
             return End
     _ -> return End
 
-test = 1
-
 data FactDbResponse = FactDbResponse
   { response_code :: Int
   , results :: [FactResult]
-  } deriving (Show, Eq)
+  } deriving (Show, Eq, Generic)
 
 data FactResult = FactResult
   { category :: String
@@ -53,8 +51,10 @@ data FactResult = FactResult
   , question :: String
   , correct_answer :: String
   , incorrect_answers :: [String]
-  } deriving (Show, Eq)
+  } deriving (Show, Eq, Generic)
 
-$(deriveJSON defaultOptions ''FactDbResponse)
+instance FromJSON FactResult where
+  parseJSON =
+    genericParseJSON defaultOptions { fieldLabelModifier = ownerFieldRename }
+instance FromJSON FactDbResponse
 
-$(deriveJSON defaultOptions {fieldLabelModifier = ownerFieldRename} ''FactResult)
