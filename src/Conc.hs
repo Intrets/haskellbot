@@ -71,13 +71,16 @@ runConc q_ = do
     case q of
       [] -> liftIO $ threadDelay 1000
       _  -> forM_ q $ \case
-        End       -> return ()
+        End       -> liftIO $ threadDelay 1000
         IOtask io -> void . liftIO . forkIO $ do
           a <- io
           atomically $ modifyTVar queue (a :)
+          liftIO $ threadDelay 1000
         Pure p -> do
           a <- p
           liftIO $ atomically $ modifyTVar queue (a :)
-        Fork group next ->
+          liftIO $ threadDelay 1000
+        Fork group next -> do
           liftIO $ atomically $ modifyTVar queue ((next : group) ++)
+          liftIO $ threadDelay 1000
     go queue
