@@ -45,17 +45,16 @@ main = do
     hClose . botSocket . bot $ options
   loop :: StdGen -> Options -> IO ()
   loop s options = do
-    a <-
-      (flip runStateT) messageQueue
-      . (flip runStateT) simpleCommands
-      . (flip runStateT) M.empty
-      . (flip runStateT) s
-      . (flip runStateT) M.empty
-      . (flip runReaderT) options
+    _ <-
+      flip runStateT messageQueue
+      . flip runStateT  simpleCommands
+      . flip runStateT  M.empty
+      . flip runStateT  s
+      . flip runStateT  M.empty
+      . flip runReaderT options
       $ runApp run
     return ()
-    --loop s st = (runReaderT (runApp run) $ st)
-test = 1
+
 run :: App ()
 run = do
   botJoin

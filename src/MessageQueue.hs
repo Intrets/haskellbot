@@ -32,5 +32,5 @@ messageDispensingLoop =
                   privmsg message
                   liftIO $ print $ currentTime > time
           )
-    >>+ const (threadDelay 10000)
+    >>+ const (threadDelay 100000)
     >>. messageDispensingLoop
