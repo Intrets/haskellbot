@@ -69,18 +69,15 @@ runConc q_ = do
   go queue = do
     q <- liftIO $ atomically $ readTVar queue <* writeTVar queue []
     case q of
-      [] -> liftIO $ threadDelay 1000
+      [] -> liftIO $ threadDelay 100000
       _  -> forM_ q $ \case
-        End       -> liftIO $ threadDelay 1000
+        End       -> return ()
         IOtask io -> void . liftIO . forkIO $ do
           a <- io
           atomically $ modifyTVar queue (a :)
-          liftIO $ threadDelay 1000
         Pure p -> do
           a <- p
           liftIO $ atomically $ modifyTVar queue (a :)
-          liftIO $ threadDelay 1000
-        Fork group next -> do
+        Fork group next ->
           liftIO $ atomically $ modifyTVar queue ((next : group) ++)
-          liftIO $ threadDelay 1000
     go queue

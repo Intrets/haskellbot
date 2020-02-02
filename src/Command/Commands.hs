@@ -71,6 +71,11 @@ commandList =
     ["!dubiousfact", "!df"]
     (CommandOptions 2 2 True True (const True))
     (const dubiousFact)
+  , Command
+    "exit"
+    ["!exit"]
+    (CommandOptions 2 2 True True (const True))
+    (const $ Pure $ quit >> return End)
   ]
 
 burselfParrotCommand :: Conc App
