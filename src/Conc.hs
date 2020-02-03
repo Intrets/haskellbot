@@ -1,6 +1,8 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE ExistentialQuantification #-}
+{-# LANGUAGE InstanceSigs #-}
 
 module Conc where
 
@@ -8,6 +10,7 @@ import Control.Concurrent
 import Control.Concurrent.STM
 import Control.Monad
 import Control.Monad.IO.Class
+import qualified Control.Category as C
 
 data Conc p
   = End
@@ -15,6 +18,17 @@ data Conc p
          (Conc p)
   | IOtask (IO (Conc p))
   | Pure (p (Conc p))
+
+data Conc2 p a c
+  = End2
+  | forall b. IOtask2 (a -> IO b) (Conc2 p b c)
+  | forall b. Pure2 (a -> p b) (Conc2 p b c)
+
+instance (Monad m) => C.Category (Conc2 m) where
+  id = Pure2 pure End2
+  cont . (IOtask2 io cont1) = IOtask2 io (cont C.. cont1)
+  cont . (Pure2   io cont1) = Pure2 io (cont C.. cont1)
+  _    . End2               = End2
 
 class Composable n m where
   (>>.) :: (a -> m b) -> Conc n -> (a -> Conc n)
@@ -44,7 +58,7 @@ startIO :: IO b -> (b -> Conc n) -> Conc n
 startIO x y = IOtask $ y <$> x
 
 (>><) :: [Conc n] -> (b -> Conc n) -> (b -> Conc n)
-(>><) list x = Fork list . x
+(>><) list x = Fork list Prelude.. x
 
 infixr 2 >><
 
