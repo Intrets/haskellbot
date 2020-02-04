@@ -11,6 +11,7 @@ import Control.Concurrent.STM
 import Control.Monad
 import Control.Monad.IO.Class
 import qualified Control.Category as C
+import Control.Arrow
 
 data Conc p
   = End
@@ -20,15 +21,33 @@ data Conc p
   | Pure (p (Conc p))
 
 data Conc2 p a c
-  = End2
+  = Id2 (a -> c)
   | forall b. IOtask2 (a -> IO b) (Conc2 p b c)
   | forall b. Pure2 (a -> p b) (Conc2 p b c)
 
 instance (Monad m) => C.Category (Conc2 m) where
-  id = Pure2 pure End2
-  cont . (IOtask2 io cont1) = IOtask2 io (cont C.. cont1)
-  cont . (Pure2   io cont1) = Pure2 io (cont C.. cont1)
-  _    . End2               = End2
+  id = Id2 id
+  cont              . (IOtask2 io cont1) = IOtask2 io (cont C.. cont1)
+  cont              . (Pure2   p  cont1) = Pure2 p (cont C.. cont1)
+  (IOtask2 io cont) . Id2 f              = IOtask2 (io . f) cont
+  (Pure2   p  cont) . Id2 f              = Pure2 (p . f) cont
+  Id2 g             . Id2 f              = Id2 (g . f)
+
+instance (Monad m) => Arrow (Conc2 m) where
+  arr = Id2
+  first (Pure2 p cont) = Pure2
+    (\(b, d) -> do
+      res <- p b
+      return (res, d)
+    )
+    (first cont)
+  first (IOtask2 io cont) = IOtask2
+    (\(b, d) -> do
+      res <- io b
+      return (res, d)
+    )
+    (first cont)
+  first (Id2 f) = Id2 (first f)
 
 class Composable n m where
   (>>.) :: (a -> m b) -> Conc n -> (a -> Conc n)
