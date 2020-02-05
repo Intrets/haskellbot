@@ -22,10 +22,12 @@ import Network.HTTP.Types.Status
 import MessageQueue
 import Data.Text as T
 import qualified Data.List as L (head)
+import Control.Concurrent
 
 dubiousFact :: ConcM App ()
 dubiousFact = do
   cont <- taskM $ do
+    threadDelay 10000000
     man <- newManager tlsManagerSettings
     let req = "http://opentdb.com/api.php?amount=1&type=boolean"
     jsonResult <- httpLbs req man

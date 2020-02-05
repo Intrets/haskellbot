@@ -14,18 +14,15 @@ import Bot.Random
 import Command
 import Command.CursedCommand
 import Conc
-import Control.Monad
-import Data.Function ((&))
 import Data.List (intercalate)
 import Data.Maybe (fromMaybe)
 import Data.Monoid ((<>))
-import qualified Data.Text as T (pack, unpack, words)
+import qualified Data.Text as T (pack, unpack)
 import qualified Data.Text.Encoding as TE
 import Data.Time.Clock.POSIX
 import MessageQueue
 import Text.Read (readMaybe)
 
-import Control.Arrow
 import Control.Monad.IO.Class
 import qualified Data.HashMap.Strict as M
 
@@ -60,7 +57,7 @@ commandList =
     burselfParrotCommand
   , Command
     "dicegolf"
-    ["!dicegolf"]
+    ["!dicegolf", "!dg"]
     (CommandOptions 2 2 True True (const True))
     dicegolfCommand
   , Command
