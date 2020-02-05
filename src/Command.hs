@@ -26,13 +26,13 @@ checkUserOnCooldown command user time =
 
 checkCommandOnCooldown :: Command m -> User -> POSIXTime -> App Bool
 checkCommandOnCooldown command user time =
-  case (requireGlobalCooldown . options $ command) of
-    True -> do
+  if requireGlobalCooldown . options $ command
+    then do
       commandCooldowns <- commandLift $ get
       case (> time) <$> M.lookup (name command) commandCooldowns of
         Nothing -> return False
         Just r  -> return r
-    False -> return False
+    else return False
 
 instance CommandCooldownHandler App where
   isOnCooldown command user time = do
@@ -40,7 +40,7 @@ instance CommandCooldownHandler App where
     c <- checkCommandOnCooldown command user time
     return $ not (u && c)
   putOnCooldown command user = do
-    time <- liftIO $ getPOSIXTime
+    time <- liftIO getPOSIXTime
     commandLift $ modify $ M.insert
       (name command)
       ((time +) $ globalCooldown . options $ command)
@@ -55,7 +55,6 @@ class (Monad m) =>
 commandMapLift = App . lift . lift . lift . lift
 
 instance CommandHandler App where
-  getCommand message = case (messageWords message) of
+  getCommand message = case messageWords message of
     []          -> return Nothing
     (start : _) -> M.lookup start <$> commandMapLift get
-

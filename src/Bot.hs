@@ -73,7 +73,7 @@ data Command a = Command
   { name :: StringType
   , commands :: [StringType]
   , options :: CommandOptions
-  , action :: Conc2 a Message ()
+  , action :: Message -> ConcM a ()
   }
 
 type CommandCooldowns = M.HashMap StringType POSIXTime

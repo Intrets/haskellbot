@@ -2,6 +2,7 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE Arrows #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Command.Commands where
 
@@ -48,16 +49,35 @@ runCommandA =
   proc message ->
   do cmd <- Pure2 getCommand (Id2 id) -< message
      case cmd of
-         Nothing -> returnA -< Id2 (const ()) 
+         Nothing -> returnA -< Id2 (const ())
          Just command -> Pure2
                            (\ (command, message) ->
                               do time <- liftIO getPOSIXTime
                                  onCooldown <- isOnCooldown command (user message) time
                                  putOnCooldown command (user message)
                                  let m = action command
-                                 if onCooldown then return $ Id2 (const ()) else return $ Id2 (const ())) 
+                                 if onCooldown then return $ Id2 (const ()) else return $ Id2 (const ()))
                            (Id2 id)
                            -< (command, message)
+
+runCommandM :: Message -> ConcM App ()
+runCommandM message@(Message text user) = do
+  c <- pureM $ do
+    liftIO $ print "running command" 
+    liftIO $ print text
+    cmd <- getCommand message
+    case cmd of
+      Nothing -> return Nothing
+      Just command -> do
+        time <- liftIO getPOSIXTime
+        onCooldown <- isOnCooldown command user time
+        if onCooldown then do
+          putOnCooldown command user
+          return $ Just $ action command message
+        else return Nothing
+  case c of
+    Nothing -> return ()
+    Just cont -> cont
 
 runCommand :: Conc2 App Message ()
 runCommand = proc message -> do
@@ -75,7 +95,7 @@ commandList =
       "burself parrot"
       ["bUrself"]
       (CommandOptions 2 2 True True (const True))
-      (burselfParrotCommand)
+      burselfParrotCommand
   ]
 
 --   , Command
@@ -103,8 +123,9 @@ commandList =
 --       ["!exit"]
 --       (CommandOptions 2 2 True True (const True))
 --       (const $ Pure $ quit >> return End)
-burselfParrotCommand :: Conc2 App Message ()
-burselfParrotCommand = cPure . const $ queueMessage "bUrself"
+burselfParrotCommand :: Message -> ConcM App ()
+burselfParrotCommand = const $ pureM $ (liftIO $ print "123") >> queueMessage "bUrself"
+
 -- randomFactCommand :: Conc App
 -- randomFactCommand =
 --   Pure $ do
