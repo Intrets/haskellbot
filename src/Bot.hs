@@ -1,3 +1,4 @@
+{-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ConstraintKinds #-}
 
 module Bot where
@@ -72,7 +73,7 @@ data Command a = Command
   { name :: StringType
   , commands :: [StringType]
   , options :: CommandOptions
-  , action :: Message -> Conc a
+  , action :: Conc2 a Message ()
   }
 
 type CommandCooldowns = M.HashMap StringType POSIXTime

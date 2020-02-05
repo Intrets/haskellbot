@@ -73,6 +73,7 @@ library
                    , GeneralizedNewtypeDeriving
                    , FlexibleContexts
                    , OverloadedStrings  
+                   , Arrows
   default-language: Haskell2010
 
 executable bot-exe

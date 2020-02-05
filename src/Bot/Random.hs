@@ -14,7 +14,7 @@ class (Monad m) =>
 instance RandomGenerator App where
   randRange low high
     | low > high = App $ pure low
-    | otherwise = App . lift . lift $ (state $ randomR (low, high))
+    | otherwise  = App . lift . lift $ (state $ randomR (low, high))
   pick array = do
     let range = A.bounds array
     i <- uncurry randRange range
@@ -24,5 +24,5 @@ dicegolf :: (RandomGenerator m) => Int -> m [Int]
 dicegolf 1 = return [1]
 dicegolf d = do
   roll <- randRange 1 d
-  n <- dicegolf roll
+  n    <- dicegolf roll
   return (d : n)

@@ -58,4 +58,6 @@ main = do
 run :: App ()
 run = do
   botJoin
-  runConc [listen2, messageDispensingLoop]
+  runConcM [messageDispensingLoopM]
+  runConc2
+    [makeRunConc2 () messageDispensingLoop2Test, makeRunConc2 () listen2Test]
