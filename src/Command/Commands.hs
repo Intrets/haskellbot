@@ -32,8 +32,6 @@ import qualified Data.HashMap.Strict as M
 runCommandM :: Message -> ConcM App ()
 runCommandM message@(Message text user) = do
   c <- pureM $ do
-    liftIO $ print "running command"
-    liftIO $ print text
     cmd <- getCommand message
     case cmd of
       Nothing      -> return Nothing

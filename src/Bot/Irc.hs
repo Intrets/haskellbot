@@ -1,8 +1,8 @@
-{-# LANGUAGE Arrows #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Bot.Irc where
 
+import Conc
 import Bot
 import Bot.Irc.Send
 import Command.Commands
@@ -26,7 +26,8 @@ listenM = do
   let
     message =
       Message (T.words . T.strip . clean $ line) (User 1 "test_user_name")
-  runCommandM message
-  -- if "PING :" `T.isPrefixOf` line then runCommandM message else runCommandM message 
+  if "PING :" `T.isPrefixOf` line
+    then pureM $ pong line
+    else runCommandM message
   listenM
 
