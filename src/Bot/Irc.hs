@@ -23,11 +23,11 @@ listenM :: ConcM App ()
 listenM = do
   handle <- pureM $ asks (botSocket . bot)
   line   <- taskM $ T.hGetLine handle
+  forkM [listenM]
   let
     message =
       Message (T.words . T.strip . clean $ line) (User 1 "test_user_name")
   if "PING :" `T.isPrefixOf` line
     then pureM $ pong line
     else runCommandM message
-  listenM
 

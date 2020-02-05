@@ -12,13 +12,15 @@ import Control.Monad.IO.Class
 
 data ConcM m c
   = EndM c
+  | ForkM [ConcM m ()] (ConcM m c)
   | forall b. TaskM (IO b) (b -> ConcM m c)
   | forall b. PureM (m b) (b -> ConcM m c)
 
 instance (Monad m) => Functor (ConcM m) where
-  fmap f (EndM c       ) = EndM $ f c
-  fmap f (TaskM io cont) = TaskM io (fmap f . cont)
-  fmap f (PureM p  cont) = PureM p (fmap f . cont)
+  fmap f (EndM c          ) = EndM $ f c
+  fmap f (ForkM forks cont) = ForkM forks (fmap f cont)
+  fmap f (TaskM io    cont) = TaskM io (fmap f . cont)
+  fmap f (PureM p     cont) = PureM p (fmap f . cont)
 
 instance (Monad m) => Applicative (ConcM m) where
   pure = EndM
@@ -27,14 +29,19 @@ instance (Monad m) => Applicative (ConcM m) where
   -- (EndM f       ) <*> (EndM c       ) = EndM (f c)
   -- (TaskM io cont) <*> (EndM c       ) = TaskM io ((<*> EndM c) . cont)
   -- (PureM p  cont) <*> (EndM c       ) = PureM p (\c2 -> cont c2 <*> EndM c)
-  (EndM f       ) <*> t = fmap f t
-  (TaskM io cont) <*> t = TaskM io ((<*> t) . cont)
-  (PureM p  cont) <*> t = PureM p ((<*> t) . cont)
+  (EndM f          ) <*> t = fmap f t
+  (ForkM forks cont) <*> t = ForkM forks (cont <*> t)
+  (TaskM io    cont) <*> t = TaskM io ((<*> t) . cont)
+  (PureM p     cont) <*> t = PureM p ((<*> t) . cont)
 
 instance (Monad m) => Monad (ConcM m) where
-  (EndM a        ) >>= cont  = PureM (pure a) cont
-  (TaskM io cont1) >>= cont2 = TaskM io ((>>= cont2) . cont1)
-  (PureM p  cont1) >>= cont2 = PureM p ((>>= cont2) . cont1)
+  (EndM a           ) >>= cont  = PureM (pure a) cont
+  (ForkM forks cont1) >>= cont2 = ForkM forks (cont1 >>= cont2)
+  (TaskM io    cont1) >>= cont2 = TaskM io ((>>= cont2) . cont1)
+  (PureM p     cont1) >>= cont2 = PureM p ((>>= cont2) . cont1)
+
+forkM :: [ConcM m ()] -> ConcM m ()
+forkM forks = ForkM forks (EndM ())
 
 pureM :: m c -> ConcM m c
 pureM x = PureM x EndM
@@ -52,7 +59,9 @@ runConcM q_ = do
     case q of
       [] -> liftIO $ threadDelay 100000
       _  -> forM_ q $ \case
-        EndM _        -> return ()
+        EndM _ -> return ()
+        ForkM forks cont ->
+          liftIO $ atomically $ modifyTVar queue ((cont : forks) ++)
         TaskM io cont -> void . liftIO . forkIO $ do
           a <- io
           atomically $ modifyTVar queue (cont a :)
