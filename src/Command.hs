@@ -28,7 +28,7 @@ checkCommandOnCooldown :: Command m -> User -> POSIXTime -> App Bool
 checkCommandOnCooldown command user time =
   if requireGlobalCooldown . options $ command
     then do
-      commandCooldowns <- commandLift $ get
+      commandCooldowns <- commandLift get
       case (> time) <$> M.lookup (name command) commandCooldowns of
         Nothing -> return False
         Just r  -> return r
