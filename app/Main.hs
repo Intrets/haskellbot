@@ -31,27 +31,25 @@ main :: IO ()
 main = do
   setLocaleEncoding utf8
   --hSetBuffering stdout NoBuffering
-  options <- execParser clOptionsParser
-  config  <- parseConfigFile $ cfgFile options
-  b       <- connect (T.unpack $ ircServer config) (ircPort config)
+  config <- parseConfigFile . cfgFile =<< execParser clOptionsParser
+  b      <- connect (T.unpack $ ircServer config) (ircPort config)
   let db = Database (dbFile config)
-  s        <- getStdGen
-  catFacts <- loadFacts $ factsFile config
-  let opt = Options b config db catFacts
+  s   <- getStdGen
+  opt <- Options b config db <$> loadFacts (factsFile config)
   bracket (pure opt) disconnect (loop s)
  where
-  disconnect options = do
+  disconnect opts = do
     putStrLn "disconnecting"
-    hClose . botSocket . bot $ options
+    hClose . botSocket . bot $ opts
   loop :: StdGen -> Options -> IO ()
-  loop s options = do
+  loop s opts = do
     _ <-
       flip runStateT messageQueue
       . flip runStateT  simpleCommands
       . flip runStateT  M.empty
       . flip runStateT  s
       . flip runStateT  M.empty
-      . flip runReaderT options
+      . flip runReaderT opts
       $ runApp run
     return ()
 

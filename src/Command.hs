@@ -15,17 +15,17 @@ class (Monad m) =>
   putOnCooldown :: Command a -> User -> m ()
 
 checkUserOnCooldown :: Command m -> User -> POSIXTime -> App Bool
-checkUserOnCooldown command user time =
+checkUserOnCooldown command usr time =
   if requireUserCooldown . options $ command
     then do
       userCooldowns <- userLift get
-      case (> time) <$> M.lookup user userCooldowns of
+      case (> time) <$> M.lookup usr userCooldowns of
         Nothing -> return False
         Just r  -> return r
     else return False
 
 checkCommandOnCooldown :: Command m -> User -> POSIXTime -> App Bool
-checkCommandOnCooldown command user time =
+checkCommandOnCooldown command usr time =
   if requireGlobalCooldown . options $ command
     then do
       commandCooldowns <- commandLift get
@@ -35,17 +35,17 @@ checkCommandOnCooldown command user time =
     else return False
 
 instance CommandCooldownHandler App where
-  isOnCooldown command user time = do
-    u <- checkUserOnCooldown command user time
-    c <- checkCommandOnCooldown command user time
+  isOnCooldown command usr time = do
+    u <- checkUserOnCooldown command usr time
+    c <- checkCommandOnCooldown command usr time
     return $ not (u && c)
-  putOnCooldown command user = do
+  putOnCooldown command usr = do
     time <- liftIO getPOSIXTime
     commandLift $ modify $ M.insert
       (name command)
       ((time +) $ globalCooldown . options $ command)
     userLift $ modify $ M.insert
-      user
+      usr
       ((time +) $ userCooldown . options $ command)
 
 class (Monad m) =>

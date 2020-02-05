@@ -5,15 +5,13 @@ import Bot.Random
 
 import Control.Monad.Reader
 import qualified Data.Array as A
-import qualified Data.Text as T (lines, null, pack, strip, unpack)
+import qualified Data.Text as T
 import qualified Data.Text.IO as T (readFile)
-import System.IO hiding (hGetContents)
-import System.IO.Strict (hGetContents)
 
 loadFacts :: StringType -> IO (A.Array Int StringType)
-loadFacts path = do
+loadFacts pth = do
   facts <- filter (not . T.null) . map T.strip . T.lines <$> T.readFile
-    (T.unpack path)
+    (T.unpack pth)
   return . A.listArray (0, pred . length $ facts) $ facts
 
 randomFact :: (MonadIO m, RandomGenerator m, OptionsConfig m) => m StringType

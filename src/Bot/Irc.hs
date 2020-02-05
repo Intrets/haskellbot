@@ -6,15 +6,9 @@ import Conc
 import Bot
 import Bot.Irc.Send
 import Command.Commands
-import Conc
-import qualified Conc
 import Control.Monad.Reader
-import Data.Function ((&))
 import qualified Data.Text as T
-  (Text, drop, dropWhile, isPrefixOf, pack, strip, unpack, words)
 import qualified Data.Text.IO as T (hGetLine)
-import GHC.IO.Handle (Handle)
-import System.IO.Unsafe
 
 clean :: StringType -> StringType
 clean = T.strip . T.drop 1 . T.dropWhile (/= ':') . T.drop 1

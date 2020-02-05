@@ -11,15 +11,10 @@ module Bot.Irc.Send
 where
 
 import Bot
-import Bot.Options.Parse
-import Conc
 
-import Control.Concurrent
-import Control.Concurrent.Async
 import Control.Monad.IO.Class
 import Control.Monad.Reader
 import System.Exit
-import System.IO
 
 import qualified Data.Text as T
 import qualified Data.Text.IO as T

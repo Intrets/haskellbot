@@ -1,7 +1,4 @@
 {-# LANGUAGE TupleSections #-}
-{-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE Arrows #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Command.Commands where
@@ -27,17 +24,17 @@ import Control.Monad.IO.Class
 import qualified Data.HashMap.Strict as M
 
 runCommandM :: Message -> ConcM App ()
-runCommandM message@(Message text user) = do
+runCommandM message@(Message text usr) = do
   c <- pureM $ do
     cmd <- getCommand message
     case cmd of
       Nothing      -> return Nothing
       Just command -> do
         time       <- liftIO getPOSIXTime
-        onCooldown <- isOnCooldown command user time
+        onCooldown <- isOnCooldown command usr time
         if onCooldown
           then do
-            putOnCooldown command user
+            putOnCooldown command usr
             return $ Just $ action command message
           else return Nothing
   case c of
@@ -64,12 +61,12 @@ commandList =
     "facts"
     ["!fact", "!f", "forsenScoots", "OMGScoots"]
     (CommandOptions 2 2 True True (const True))
-    (randomFactCommand)
+    randomFactCommand
   , Command
     "real facts"
     ["!realfact", "!rf"]
     (CommandOptions 2 2 True True (const True))
-    (randomFactCommand)
+    randomFactCommand
   , Command
     "dubious facts"
     ["!dubiousfact", "!df"]
