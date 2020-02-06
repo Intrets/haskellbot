@@ -15,6 +15,7 @@ data ConcM m c
   | ForkM [ConcM m ()] (ConcM m c)
   | forall b. TaskM (IO b) (b -> ConcM m c)
   | forall b. PureM (m b) (b -> ConcM m c)
+--  | Await . . . (b -> ConcM m c)
 
 instance (Monad m) => Functor (ConcM m) where
   fmap f (EndM c          ) = EndM $ f c
@@ -24,11 +25,6 @@ instance (Monad m) => Functor (ConcM m) where
 
 instance (Monad m) => Applicative (ConcM m) where
   pure = EndM
-  -- t               <*> (TaskM io cont) = TaskM io ((t <*>) . cont)
-  -- t               <*> (PureM p  cont) = PureM p ((t <*>) . cont)
-  -- (EndM f       ) <*> (EndM c       ) = EndM (f c)
-  -- (TaskM io cont) <*> (EndM c       ) = TaskM io ((<*> EndM c) . cont)
-  -- (PureM p  cont) <*> (EndM c       ) = PureM p (\c2 -> cont c2 <*> EndM c)
   (EndM f          ) <*> t = fmap f t
   (ForkM forks cont) <*> t = ForkM forks (cont <*> t)
   (TaskM io    cont) <*> t = TaskM io ((<*> t) . cont)
@@ -57,7 +53,7 @@ runConcM q_ = do
   go queue = do
     q <- liftIO $ atomically $ readTVar queue <* writeTVar queue []
     case q of
-      [] -> liftIO $ threadDelay 100000
+      [] -> liftIO $ threadDelay 10000
       _  -> forM_ q $ \case
         EndM _ -> return ()
         ForkM forks cont ->
