@@ -1,11 +1,13 @@
 {-# LANGUAGE ViewPatterns #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE LambdaCase #-}
 
 module Command.CursedCommand
   ( FactDbResponse()
   , FactResult()
   , dubiousFact
+  , activateTrivia
   )
 where
 
@@ -23,11 +25,58 @@ import MessageQueue
 import Data.Text as T
 import qualified Data.List as L (head)
 import Control.Concurrent
+import Control.Monad.State
+
+activateTrivia :: ConcM App ()
+activateTrivia = do
+  _ <- Task
+    (ActionAwaitLoop
+      [ChatCommand "!df"]
+      ()
+      (\case
+        ChatCommand x -> return $ Just True
+        _             -> return Nothing
+      )
+    )
+    EndM
+  dubiousFactTrivia
+
+
+dubiousFactTrivia :: ConcM App ()
+dubiousFactTrivia = do
+  fetch <- taskM $ do
+    man <- newManager tlsManagerSettings
+    let req = "http://opentdb.com/api.php?amount=1&type=boolean"
+    jsonResult <- httpLbs req man
+    case statusCode . responseStatus $ jsonResult of
+      200 -> do
+        let response = decode (responseBody jsonResult) :: Maybe FactDbResponse
+        return $ fmap results response
+      _ -> return Nothing
+  case fetch of
+    Nothing           -> activateTrivia
+    Just []           -> activateTrivia
+    Just (result : _) -> do
+      let answer = T.pack $ correct_answer result
+      pureM $ queueMessage . T.pack . question $ result
+      _ <- Task
+        (ActionAwaitLoop
+          [ChatCommand "True", ChatCommand "False"]
+          ()
+          (\case
+            ChatCommand x ->
+              if x == answer then return $ Just True else return $ Nothing
+            _ -> return $ Nothing
+          )
+        )
+        EndM
+      pureM $ queueMessage . T.pack $ "someone got it right"
+      activateTrivia
+
 
 dubiousFact :: ConcM App ()
 dubiousFact = do
   cont <- taskM $ do
-    threadDelay 10000000
     man <- newManager tlsManagerSettings
     let req = "http://opentdb.com/api.php?amount=1&type=boolean"
     jsonResult <- httpLbs req man

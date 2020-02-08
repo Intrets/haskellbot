@@ -67,6 +67,7 @@ library
               , http-types
               , time
               , aeson
+              , transformers
   ghc-options: -Wall -O2 
   default-extensions:
                      ConstraintKinds

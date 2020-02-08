@@ -8,6 +8,7 @@ import Bot.Irc
 import Bot.Irc.Connection
 import Bot.Irc.Send
 import Bot.Options.Parse
+import Command.CursedCommand
 import Command.Commands
 import MessageQueue
 
@@ -56,4 +57,4 @@ main = do
 run :: App ()
 run = do
   botJoin
-  runConcM [messageDispensingLoopM, listenM]
+  runConcM [messageDispensingLoopM, activateTrivia, listenEvent]
