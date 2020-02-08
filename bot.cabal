@@ -89,6 +89,9 @@ executable bot-exe
               , HDBC-sqlite3 >= 2.3.3.1
               , optparse-applicative
               , split
+              , http-client
+              , http-client-tls
+              , http-types
               , containers
               , mtl
               , random

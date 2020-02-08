@@ -24,8 +24,8 @@ import Network.HTTP.Types.Status
 import MessageQueue
 import Data.Text as T
 import qualified Data.List as L (head)
-import Control.Concurrent
-import Control.Monad.State
+
+import Control.Monad.Reader
 
 activateTrivia :: ConcM App ()
 activateTrivia = do
@@ -44,8 +44,9 @@ activateTrivia = do
 
 dubiousFactTrivia :: ConcM App ()
 dubiousFactTrivia = do
+  man   <- pureM $ asks httpsManager
   fetch <- taskM $ do
-    man <- newManager tlsManagerSettings
+    -- man <- newManager tlsManagerSettings
     let req = "http://opentdb.com/api.php?amount=1&type=boolean"
     jsonResult <- httpLbs req man
     case statusCode . responseStatus $ jsonResult of
@@ -53,6 +54,7 @@ dubiousFactTrivia = do
         let response = decode (responseBody jsonResult) :: Maybe FactDbResponse
         return $ fmap results response
       _ -> return Nothing
+  -- let fetch = Just . pure $ FactResult "" "" "" "test question" "test" ["test"]
   case fetch of
     Nothing           -> activateTrivia
     Just []           -> activateTrivia
@@ -61,7 +63,7 @@ dubiousFactTrivia = do
       pureM $ queueMessage . T.pack . question $ result
       _ <- Task
         (ActionAwaitLoop
-          [ChatCommand "True", ChatCommand "False"]
+          [ChatCommand "True", ChatCommand "False", ChatCommand "test"]
           ()
           (\case
             ChatCommand x ->
@@ -80,6 +82,7 @@ dubiousFact = do
     man <- newManager tlsManagerSettings
     let req = "http://opentdb.com/api.php?amount=1&type=boolean"
     jsonResult <- httpLbs req man
+    closeManager man
     case statusCode . responseStatus $ jsonResult of
       200 -> do
         let response = decode (responseBody jsonResult) :: Maybe FactDbResponse

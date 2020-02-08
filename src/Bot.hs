@@ -19,6 +19,8 @@ import qualified Data.Text as T (Text)
 import qualified Data.Array as A
 import Data.Time.Clock.POSIX
 
+import Network.HTTP.Client
+
 newtype Bot = Bot
   { botSocket :: Handle
   }
@@ -27,6 +29,7 @@ data Options = Options
   { bot :: Bot
   , programOptions :: ProgramOptions
   , databaseOptions :: Database
+  , httpsManager :: Manager
   , catFacts :: A.Array Int StringType
   }
 
@@ -38,11 +41,11 @@ data ProgramOptions = ProgramOptions
   , ircOauth :: StringType
   , dbFile :: StringType
   , factsFile :: StringType
-  } deriving (Show)
+  }
 
 newtype Database = Database
   { path :: StringType
-  } deriving (Show)
+  }
 
 type OptionsConfig = MonadReader Options
 

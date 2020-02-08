@@ -1,5 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 module Main where
 
 import Bot
@@ -22,6 +20,8 @@ import Options.Applicative
 import Queue
 import System.IO --
 import System.Random
+import Network.HTTP.Client
+import Network.HTTP.Client.TLS
 
 import Conc
 
@@ -34,9 +34,10 @@ main = do
   --hSetBuffering stdout NoBuffering
   config <- parseConfigFile . cfgFile =<< execParser clOptionsParser
   b      <- connect (T.unpack $ ircServer config) (ircPort config)
+  man    <- newManager tlsManagerSettings
   let db = Database (dbFile config)
   s   <- getStdGen
-  opt <- Options b config db <$> loadFacts (factsFile config)
+  opt <- Options b config db man <$> loadFacts (factsFile config)
   bracket (pure opt) disconnect (loop s)
  where
   disconnect opts = do
