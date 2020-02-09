@@ -9,7 +9,7 @@ import Data.Time.Clock.POSIX
 import Queue
 
 messageLift :: StateT MessageQueue IO a -> App a
-messageLift = App . lift . lift . lift . lift . lift
+messageLift = App . lift . lift . lift . lift
 
 queueMessage :: StringType -> App ()
 queueMessage message = messageLift

@@ -1,13 +1,22 @@
 module Command where
 
+import Conc
 import Bot
 import Control.Monad.State.Strict
 import qualified Data.HashMap.Strict as M
 import Data.Time.Clock.POSIX
 
-commandLift = App . lift
+commandLift = App
 
 userLift = App . lift . lift . lift
+
+data Command a = Command
+  { name :: StringType
+  , commands :: [StringType]
+  , options :: CommandOptions
+  , action :: Message -> ConcM a ()
+  }
+
 
 class (Monad m) =>
       CommandCooldownHandler m where
@@ -52,9 +61,9 @@ class (Monad m) =>
       CommandHandler m where
   getCommand :: Message -> m (Maybe (Command App))
 
-commandMapLift = App . lift . lift . lift . lift
+commandMapLift = App . lift . lift . lift
 
 instance CommandHandler App where
   getCommand message = case messageWords message of
-    []          -> return Nothing
-    (start : _) -> M.lookup start <$> commandMapLift get
+    [] -> return Nothing
+    -- (start : _) -> M.lookup start <$> commandMapLift get

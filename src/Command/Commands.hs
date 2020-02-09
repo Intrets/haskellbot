@@ -41,10 +41,6 @@ runCommandM message@(Message text usr) = do
     Nothing   -> return ()
     Just cont -> cont
 
-simpleCommands :: Commands
-simpleCommands = M.fromList
-  $ concatMap (\command -> map (, command) (commands command)) commandList
-
 commandList :: [Command App]
 commandList =
   [ Command
@@ -73,6 +69,12 @@ commandList =
     (CommandOptions 2 2 True True (const True))
     (const dubiousFact)
   ]
+
+burselfParrotCommandM :: ConcM App ()
+burselfParrotCommandM = do
+  _ <- awaitM [ChatCommand "bUrself"] (const ())
+  pureM $ queueMessage "bUrself"
+  burselfParrotCommandM
 
 burselfParrotCommand :: Message -> ConcM App ()
 burselfParrotCommand = const $ pureM $ queueMessage "bUrself"

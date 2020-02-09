@@ -3,7 +3,7 @@
 
 module Bot where
 
-import Conc
+-- import Conc
 import Control.Monad.Reader
 import qualified Data.HashMap.Strict as M
 import Data.Hashable
@@ -72,18 +72,11 @@ data CommandOptions = CommandOptions
   , idVerification :: !(Int -> Bool)
   }
 
-data Command a = Command
-  { name :: StringType
-  , commands :: [StringType]
-  , options :: CommandOptions
-  , action :: Message -> ConcM a ()
-  }
-
 type CommandCooldowns = M.HashMap StringType POSIXTime
 
 type UserCooldowns = M.HashMap User POSIXTime
 
-type Commands = M.HashMap StringType (Command App)
+-- type Commands = M.HashMap StringType (Command App)
 
 data MessageQueue = MessageQueue
   { lastMessage :: !POSIXTime
@@ -91,7 +84,7 @@ data MessageQueue = MessageQueue
   }
 
 newtype App a = App
-  { runApp :: ReaderT Options (StateT CommandCooldowns (StateT StdGen (StateT UserCooldowns (StateT Commands (StateT MessageQueue IO))))) a
+  { runApp :: ReaderT Options (StateT CommandCooldowns (StateT StdGen (StateT UserCooldowns (StateT MessageQueue IO)))) a
   } deriving (Monad, Functor, Applicative, OptionsConfig, MonadIO)
 
 (!?) :: [a] -> Int -> Maybe a

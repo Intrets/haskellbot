@@ -1,3 +1,4 @@
+{-# LANGUAGE MultiWayIf #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE LambdaCase #-}
 
@@ -12,6 +13,9 @@ import qualified Data.Text as T
 import qualified Data.Text.IO as T (hGetLine)
 import Control.Concurrent (threadDelay)
 import Control.Monad.State
+import Data.List (find)
+import Data.Maybe (fromMaybe)
+import Text.Read (readMaybe)
 
 clean :: StringType -> StringType
 clean = T.strip . T.drop 1 . T.dropWhile (/= ':') . T.drop 1
@@ -28,40 +32,39 @@ listenM = do
     then pureM $ pong line
     else runCommandM message
 
+parseTags :: T.Text -> Message
+parseTags t = Message (T.words m) (User id' name)
+ where
+  w = T.split (== ';') t
+  name =
+    maybe "#display-name not found" (T.tail . T.dropWhile (/= '='))
+      . find ("display-name" `T.isPrefixOf`)
+      $ w
+  id' =
+    fromMaybe (0 :: Int)
+      . readMaybe
+      . maybe "0" (T.unpack . T.tail . T.dropWhile (/= '='))
+      . find ("user-id" `T.isPrefixOf`)
+      $ w
+  m = (!! 2) . T.split (== ':') $ t
+
 listenEvent :: ConcM App ()
 listenEvent = do
   handle <- pureM $ asks (botSocket . bot)
-  line   <- taskM $ T.hGetLine handle
+  line   <- taskM $ do
+    l <- T.hGetLine handle
+    print l
+    return l
   forkM [listenEvent]
-  let
-    message =
-      Message (T.words . T.strip . clean $ line) (User 1 "test_user_name")
-  if "PING :" `T.isPrefixOf` line
-    then pureM $ pong line
-    else case messageWords message of
+  let message = parseTags line
+  if
+    | "PING" `T.isPrefixOf` line -> pureM $ pong line
+    | ":" `T.isPrefixOf` line -> return ()
+    | otherwise -> case messageWords message of
       []      -> return ()
-      (h : _) -> Task (ActionSend (ChatCommand h) ()) EndM
-
-
-
-dispatchEventTest :: Int -> ConcM App ()
-dispatchEventTest i = do
-  Task (ActionSend (ChatCommand "!test") ()) EndM
-  taskM $ threadDelay 10000 >> print i
-  dispatchEventTest $ succ i
-
-listenEventTest :: ConcM App ()
-listenEventTest = do
-  let x = 1
-  let
-    a =
-      (\case
-        (ChatCommand "!test") -> do
-          modify succ
-          c <- get
-          if c > 100 then return $ Just c else return Nothing
-      ) :: (Event -> State Int (Maybe Int))
-  let b = ActionAwaitLoop [ChatCommand "!test"] (1 :: Int) a
-  Task b EndM
-  taskM $ print "!test received"
-
+      (h : _) -> Task
+        (ActionSend
+          (EventResult (ChatCommand h) (ChatCommandResult (user message)))
+          ()
+        )
+        EndM

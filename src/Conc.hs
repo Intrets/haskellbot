@@ -4,9 +4,14 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE ExistentialQuantification #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE PolyKinds #-}
+{-# LANGUAGE GADTs #-}
+
 
 module Conc where
-
+import Bot (User(..))
 import Control.Concurrent
 import Control.Concurrent.STM
 import Control.Concurrent.STM.TChan
@@ -18,51 +23,50 @@ import qualified Data.HashMap.Strict as M
 import Data.Hashable
 import GHC.Generics
 
+data Wat = Int
+
 data Event = ChatCommand T.Text | ChatWord T.Text deriving (Generic, Eq)
+--data EventResult = ChatCommandResult Event User | ChatWordResult Event User deriving (Generic, Eq)
+
+data EventResultType = ChatCommandResult User | ChatWordResult User
+
+data EventResult = EventResult Event EventResultType
 
 instance Hashable Event
 
 data Action m b
   = ActionIO (IO b)
   | ActionPure (m b)
-  | ActionAwait Event (Event -> b)
-  | forall s. ActionAwaitLoop [Event] s (Event -> State s (Maybe b))
-  | ActionSend Event b
+  | ActionAwait [Event] (EventResult -> b)
+  | forall s. ActionAwaitLoop [Event] s (EventResult -> State s (Maybe b))
+  | ActionSend EventResult b
 
-awaitM :: [Event] -> s -> (Event -> State s (Maybe a)) -> ConcM m a
-awaitM events s actions = Task t EndM
-  where t = ActionAwaitLoop events s actions
+awaitMLoop :: [Event] -> s -> (EventResult -> State s (Maybe a)) -> ConcM m a
+awaitMLoop events s actions = Task (ActionAwaitLoop events s actions) EndM
+
+awaitM :: [Event] -> (EventResult -> a) -> ConcM m a
+awaitM events action = Task (ActionAwait events action) EndM
 
 data ConcM m c
   = EndM c
   | ForkM [ConcM m ()] (ConcM m c)
   | forall b. Task (Action m b) (b -> ConcM m c)
---   | forall b. TaskM (IO b) (b -> ConcM m c)
---   | forall b. PureM (m b) (b -> ConcM m c)
---   | forall b. Await [Event b) (b -> ConcM m c)
 
 instance (Monad m) =>  Functor (ConcM m) where
   fmap f (EndM c           ) = EndM $ f c
   fmap f (ForkM forks  cont) = ForkM forks (fmap f cont)
   fmap f (Task  action cont) = Task action (fmap f . cont)
---  fmap f (TaskM io    cont) = TaskM io (fmap f . cont)
---  fmap f (PureM p     cont) = PureM p (fmap f . cont)
---  fmap f (Await e     cont) = Await e (fmap f . cont)
 
 instance  (Monad m) => Applicative (ConcM m) where
   pure = EndM
   (EndM f           ) <*> t = fmap f t
   (ForkM forks  cont) <*> t = ForkM forks (cont <*> t)
   (Task  action cont) <*> t = Task action ((<*> t) . cont)
---  (TaskM io    cont) <*> t = TaskM io ((<*> t) . cont)
---  (PureM p     cont) <*> t = PureM p ((<*> t) . cont)
 
 instance (Monad m) => Monad (ConcM m) where
   (EndM a            ) >>= cont  = Task (ActionPure (pure a)) cont
   (ForkM forks  cont1) >>= cont2 = ForkM forks (cont1 >>= cont2)
   (Task  action cont1) >>= cont2 = Task action ((>>= cont2) . cont1)
---  (TaskM io    cont1) >>= cont2 = TaskM io ((>>= cont2) . cont1)
---  (PureM p     cont1) >>= cont2 = PureM p ((>>= cont2) . cont1)
 
 forkM :: [ConcM m ()] -> ConcM m ()
 forkM forks = ForkM forks (EndM ())
@@ -75,8 +79,8 @@ taskM x = Task (ActionIO x) EndM
 
 getChan
   :: [Event]
-  -> M.HashMap Event (TChan Event)
-  -> IO ([TChan Event], M.HashMap Event (TChan Event))
+  -> M.HashMap Event (TChan EventResult)
+  -> IO ([TChan EventResult], M.HashMap Event (TChan EventResult))
 getChan es = runStateT $ do
   s <- get
   forM es $ \e -> case M.lookup e s of
@@ -86,19 +90,20 @@ getChan es = runStateT $ do
       liftIO $ atomically $ dupTChan new
     Just r -> liftIO . atomically $ dupTChan r
 
-subscribe :: [Event] -> TVar (M.HashMap Event (TChan Event)) -> IO Event
+subscribe
+  :: [Event] -> TVar (M.HashMap Event (TChan EventResult)) -> IO EventResult
 subscribe events channels = do
   chans                    <- readTVarIO channels
   (listenChannels, chans2) <- getChan events chans
   atomically $ writeTVar channels chans2
   atomically $ Prelude.foldl1 orElse (Prelude.map readTChan listenChannels)
 
-sendEvent :: TVar (M.HashMap Event (TChan Event)) -> Event -> IO ()
-sendEvent channels event = do
+sendEvent :: TVar (M.HashMap Event (TChan EventResult)) -> EventResult -> IO ()
+sendEvent channels r@(EventResult event _) = do
   chans <- readTVarIO channels
   case M.lookup event chans of
     Nothing -> return ()
-    Just c  -> atomically $ writeTChan c event
+    Just c  -> atomically $ writeTChan c r
 
 
 -- unsubscribe :: TChan Event -> IO ()
@@ -111,8 +116,9 @@ runConcM q_ = do
     q <- newTQueue
     mapM_ (writeTQueue q) q_
     return q
-  channels <- liftIO . newTVarIO $ (M.empty :: M.HashMap Event (TChan Event))
-  _        <- forever $ go queue channels
+  channels <-
+    liftIO . newTVarIO $ (M.empty :: M.HashMap Event (TChan EventResult))
+  _ <- forever $ go queue channels
   return ()
  where
   go queue channels = do
@@ -131,12 +137,14 @@ runConcM q_ = do
         void . liftIO . forkIO $ do
           a <- listen (subscribe events channels) s action
           liftIO $ atomically $ writeTQueue queue (cont a)
+      Task (ActionAwait events action) cont -> void . liftIO . forkIO $ do
+        a <- subscribe events channels
+        liftIO $ atomically $ writeTQueue queue (cont . action $ a)
       Task (ActionSend event b) cont -> do
         liftIO $ sendEvent channels event
         liftIO $ atomically $ writeTQueue queue (cont b)
-      _ -> undefined
 
-listen :: IO Event -> s -> (Event -> State s (Maybe b)) -> IO b
+listen :: IO EventResult -> s -> (EventResult -> State s (Maybe b)) -> IO b
 listen h s events = do
   e <- h
   let (continue, s2) = runState (events e) s

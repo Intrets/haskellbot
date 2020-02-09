@@ -47,7 +47,6 @@ main = do
   loop s opts = do
     _ <-
       flip runStateT messageQueue
-      . flip runStateT  simpleCommands
       . flip runStateT  M.empty
       . flip runStateT  s
       . flip runStateT  M.empty
@@ -58,4 +57,5 @@ main = do
 run :: App ()
 run = do
   botJoin
-  runConcM [messageDispensingLoopM, activateTrivia, listenEvent]
+  runConcM
+    [messageDispensingLoopM, activateTrivia, listenEvent, burselfParrotCommandM]

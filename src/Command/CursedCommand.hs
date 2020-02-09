@@ -2,6 +2,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module Command.CursedCommand
   ( FactDbResponse()
@@ -34,8 +35,8 @@ activateTrivia = do
       [ChatCommand "!df"]
       ()
       (\case
-        ChatCommand x -> return $ Just True
-        _             -> return Nothing
+        EventResult _ (ChatCommandResult user) -> return $ Just True
+        _ -> return Nothing
       )
     )
     EndM
@@ -61,18 +62,18 @@ dubiousFactTrivia = do
     Just (result : _) -> do
       let answer = T.pack $ correct_answer result
       pureM $ queueMessage . T.pack . question $ result
-      _ <- Task
+      u <- Task
         (ActionAwaitLoop
-          [ChatCommand "True", ChatCommand "False", ChatCommand "test"]
+          [ChatCommand "True", ChatCommand "False"]
           ()
           (\case
-            ChatCommand x ->
-              if x == answer then return $ Just True else return $ Nothing
+            EventResult (ChatCommand x) (ChatCommandResult user) ->
+              if answer == x then return $ Just user else return $ Nothing
             _ -> return $ Nothing
           )
         )
         EndM
-      pureM $ queueMessage . T.pack $ "someone got it right"
+      pureM $ queueMessage $ (displayName u) <> " answered correctly"
       activateTrivia
 
 

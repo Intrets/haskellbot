@@ -49,7 +49,8 @@ botJoin = do
   write "NICK" nick
   write "USER" (nick <> " 0 * :tutorial bot")
   chan <- asks (ircChannel . programOptions)
-  write "JOIN" chan
+  write "JOIN"                    chan
+  write "CAP REQ :twitch.tv/tags" chan
 
 pong :: StringType -> App ()
 pong x = write "PONG" (":" <> T.drop 6 x)
