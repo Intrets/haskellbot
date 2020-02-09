@@ -63,8 +63,6 @@ listenEvent = do
     | otherwise -> case messageWords message of
       []      -> return ()
       (h : _) -> Task
-        (ActionSend
-          (EventResult (ChatCommand h) (ChatCommandResult (user message)))
-          ()
+        (ActionSend (EventResult (ChatCommand h) (ChatCommandResult message)) ()
         )
         EndM

@@ -1,5 +1,6 @@
 {-# LANGUAGE TupleSections #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE LambdaCase #-}
 
 module Command.Commands where
 
@@ -72,7 +73,7 @@ commandList =
 
 burselfParrotCommandM :: ConcM App ()
 burselfParrotCommandM = do
-  _ <- awaitM [ChatCommand "bUrself"] (const ())
+  _ <- awaitM_ [ChatCommand "bUrself"] 0
   pureM $ queueMessage "bUrself"
   burselfParrotCommandM
 
@@ -88,6 +89,22 @@ dicegolfCommand :: Message -> ConcM App ()
 dicegolfCommand (Message msg _) = pureM $ do
   result <- dicegolf . fromMaybe 100 $ (readMaybe . T.unpack) =<< (msg !? 1)
   queueMessage . formatDicegolfResult $ result
+
+dicegolfCommandM :: ConcM App ()
+dicegolfCommandM = do
+  m <- fromMaybe 100 <$> awaitM
+    [ChatCommand "!dicegolf", ChatCommand "!dg"]
+    0
+    (\case
+      EventResult (ChatCommand _) (ChatCommandResult (Message w _)) ->
+        case w of
+          (_ : n : _) -> readMaybe . T.unpack $ n :: Maybe Int
+          _           -> Nothing
+      _ -> Nothing
+    )
+  pureM $ dicegolf m >>= queueMessage . formatDicegolfResult
+  dicegolfCommandM
+
 
 rollDie :: Message -> ConcM App ()
 rollDie (Message msg _) = do

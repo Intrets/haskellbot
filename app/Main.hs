@@ -58,4 +58,9 @@ run :: App ()
 run = do
   botJoin
   runConcM
-    [messageDispensingLoopM, activateTrivia, listenEvent, burselfParrotCommandM]
+    [ messageDispensingLoopM
+    , activateTrivia
+    , listenEvent
+    , burselfParrotCommandM
+    , dicegolfCommandM
+    ]

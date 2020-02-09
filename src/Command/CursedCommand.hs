@@ -30,16 +30,7 @@ import Control.Monad.Reader
 
 activateTrivia :: ConcM App ()
 activateTrivia = do
-  _ <- Task
-    (ActionAwaitLoop
-      [ChatCommand "!df"]
-      ()
-      (\case
-        EventResult _ (ChatCommandResult user) -> return $ Just True
-        _ -> return Nothing
-      )
-    )
-    EndM
+  _ <- awaitM_ [ChatCommand "!df"] 0
   dubiousFactTrivia
 
 
@@ -62,18 +53,29 @@ dubiousFactTrivia = do
     Just (result : _) -> do
       let answer = T.pack $ correct_answer result
       pureM $ queueMessage . T.pack . question $ result
-      u <- Task
-        (ActionAwaitLoop
-          [ChatCommand "True", ChatCommand "False"]
-          ()
-          (\case
-            EventResult (ChatCommand x) (ChatCommandResult user) ->
-              if answer == x then return $ Just user else return $ Nothing
-            _ -> return $ Nothing
-          )
+      u <- awaitMLoop
+        [ChatCommand "True", ChatCommand "False"]
+        10000
+        ()
+        (\case
+          EventResult (ChatCommand x) (ChatCommandResult user) ->
+            if answer == x
+              then return $ Just . Just $ user
+              else return $ Nothing
+          EventResult Timeout TimeoutResult -> return $ Just Nothing
+          _ -> return Nothing
         )
-        EndM
-      pureM $ queueMessage $ (displayName u) <> " answered correctly"
+      case u of
+        Nothing ->
+          pureM
+            $  queueMessage
+            $  "the correct answer was "
+            <> (T.pack . correct_answer $ result)
+        Just m ->
+          pureM
+            $  queueMessage
+            $  (displayName . user $ m)
+            <> " answered correctly"
       activateTrivia
 
 
