@@ -1,6 +1,5 @@
 {-# LANGUAGE MultiWayIf #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE LambdaCase #-}
 
 module Bot.Irc where
 
@@ -11,8 +10,6 @@ import Command.Commands
 import Control.Monad.Reader
 import qualified Data.Text as T
 import qualified Data.Text.IO as T (hGetLine)
-import Control.Concurrent (threadDelay)
-import Control.Monad.State
 import Data.List (find)
 import Data.Maybe (fromMaybe)
 import Text.Read (readMaybe)
@@ -62,7 +59,9 @@ listenEvent = do
     | ":" `T.isPrefixOf` line -> return ()
     | otherwise -> case messageWords message of
       []      -> return ()
-      (h : _) -> Task
-        (ActionSend (EventResult (ChatCommand h) (ChatCommandResult message)) ()
-        )
-        EndM
+      (h : _) -> do
+        sendM (ChatCommand h) (ChatCommandResult message)
+        mapM_ (\h' -> sendM (ChatWord h') (ChatCommandResult message))
+          $ messageWords message
+
+

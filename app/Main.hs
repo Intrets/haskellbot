@@ -9,6 +9,7 @@ import Bot.Options.Parse
 import Command.CursedCommand
 import Command.Commands
 import MessageQueue
+import Command.Nam
 
 import Control.Exception -- base
 import Control.Monad.Reader
@@ -64,4 +65,5 @@ run = do
     , burselfParrotCommandM
     , dicegolfCommandM
     , randomFactCommandM
+    , namCountingM
     ]

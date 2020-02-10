@@ -69,7 +69,7 @@ library
               , time
               , aeson
               , transformers
-              , uri-encode
+              , base64-bytestring
               , bytestring
   ghc-options: -Wall -O2 
   default-extensions:

@@ -6,10 +6,8 @@ module Command.Commands where
 import Bot
 
 import Bot.Catfacts
-import Bot.Irc.Send
 import Bot.Random
 import Command
-import Command.CursedCommand
 import Conc
 import Data.List (intercalate)
 import Data.Maybe (fromMaybe)
@@ -19,14 +17,11 @@ import qualified Data.Text.Encoding as TE
 import Data.Time.Clock.POSIX
 import MessageQueue
 import Text.Read (readMaybe)
-import Control.Concurrent
 import Control.Monad.State.Lazy
 
-import Control.Monad.IO.Class
-import qualified Data.HashMap.Strict as M
 
 runCommandM :: Message -> ConcM App ()
-runCommandM message@(Message text usr) = do
+runCommandM message@(Message _ usr) = do
   c <- pureM $ do
     cmd <- getCommand message
     case cmd of

@@ -1,4 +1,3 @@
-{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
@@ -51,6 +50,9 @@ awaitM events timeout action = Task (ActionAwait events timeout action) EndM
 
 awaitM_ :: [Event] -> Int -> ConcM m ()
 awaitM_ events timeout = Task (ActionAwait events timeout (const ())) EndM
+
+sendM :: Event -> EventResultType -> ConcM App ()
+sendM event result = Task (ActionSend (EventResult event result) ()) EndM
 
 data ConcM m c
   = EndM c
@@ -127,38 +129,38 @@ sendEvent channels r@(EventResult event _) = do
 
 runConcM :: (Monad a, MonadIO a) => [ConcM a ()] -> a ()
 runConcM q_ = do
-  queue <- liftIO . atomically $ do
+  queue' <- liftIO . atomically $ do
     q <- newTQueue
     mapM_ (writeTQueue q) q_
     return q
   channels <-
     liftIO . newTVarIO $ (M.empty :: M.HashMap Event (TChan EventResult))
-  _ <- forever $ go queue channels
+  _ <- forever $ go queue' channels
   return ()
  where
-  go queue channels = do
-    q <- liftIO . atomically $ readTQueue queue
+  go queue' channels = do
+    q <- liftIO . atomically $ readTQueue queue'
     case q of
       EndM _ -> return ()
       ForkM forks cont ->
-        liftIO . atomically $ mapM_ (writeTQueue queue) (cont : forks)
+        liftIO . atomically $ mapM_ (writeTQueue queue') (cont : forks)
       Task (ActionIO io) cont -> void . liftIO . forkIO $ do
         a <- io
-        atomically $ writeTQueue queue (cont a)
+        atomically $ writeTQueue queue' (cont a)
       Task (ActionPure p) cont -> do
         a <- p
-        liftIO $ atomically $ writeTQueue queue (cont a)
+        liftIO $ atomically $ writeTQueue queue' (cont a)
       Task (ActionAwaitLoop events timeout s action) cont ->
         void . liftIO . forkIO $ do
           a <- listen (subscribe events channels timeout) s action
-          liftIO $ atomically $ writeTQueue queue (cont a)
+          liftIO $ atomically $ writeTQueue queue' (cont a)
       Task (ActionAwait events timout action) cont ->
         void . liftIO . forkIO $ do
           a <- subscribe events channels timout
-          liftIO $ atomically $ writeTQueue queue (cont . action $ a)
+          liftIO $ atomically $ writeTQueue queue' (cont . action $ a)
       Task (ActionSend event b) cont -> do
         liftIO $ sendEvent channels event
-        liftIO $ atomically $ writeTQueue queue (cont b)
+        liftIO $ atomically $ writeTQueue queue' (cont b)
 
 listen :: IO EventResult -> s -> (EventResult -> State s (Maybe b)) -> IO b
 listen h s events = do
