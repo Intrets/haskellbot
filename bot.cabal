@@ -40,6 +40,7 @@ library
                   Queue
                   MessageQueue
                   Command
+                  Command.Nam
                   Command.Commands
                   Command.RenameUtils
                   Command.CursedCommand
@@ -68,6 +69,8 @@ library
               , time
               , aeson
               , transformers
+              , uri-encode
+              , bytestring
   ghc-options: -Wall -O2 
   default-extensions:
                      ConstraintKinds

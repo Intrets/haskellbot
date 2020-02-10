@@ -2,7 +2,7 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE LambdaCase #-}
+
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE TypeFamilies #-}
@@ -12,10 +12,8 @@
 
 module Conc where
 import Bot
-import Bot (User(..))
 import Control.Concurrent
 import Control.Concurrent.STM
-import Control.Concurrent.STM.TChan
 import Control.Monad
 import Control.Monad.IO.Class
 import Data.Text as T

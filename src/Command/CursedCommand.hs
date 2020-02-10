@@ -12,6 +12,8 @@ module Command.CursedCommand
   )
 where
 
+import Network.URI.Encode (decodeByteString)
+import Data.ByteString.Lazy
 import GHC.Generics
 import Bot
 import Command.RenameUtils
@@ -33,17 +35,24 @@ activateTrivia = do
   _ <- awaitM_ [ChatCommand "!df"] 0
   dubiousFactTrivia
 
-
 dubiousFactTrivia :: ConcM App ()
 dubiousFactTrivia = do
   man   <- pureM $ asks httpsManager
   fetch <- taskM $ do
     -- man <- newManager tlsManagerSettings
-    let req = "http://opentdb.com/api.php?amount=1&type=boolean"
+    let req = "http://opentdb.com/api.php?amount=1&type=boolean&encode=url3986"
     jsonResult <- httpLbs req man
     case statusCode . responseStatus $ jsonResult of
       200 -> do
-        let response = decode (responseBody jsonResult) :: Maybe FactDbResponse
+        let
+          response =
+            decode
+              ( fromStrict
+              . decodeByteString
+              . toStrict
+              . responseBody
+              $ jsonResult
+              ) :: Maybe FactDbResponse
         return $ fmap results response
       _ -> return Nothing
   -- let fetch = Just . pure $ FactResult "" "" "" "test question" "test" ["test"]
@@ -77,7 +86,6 @@ dubiousFactTrivia = do
             $  (displayName . user $ m)
             <> " answered correctly"
       activateTrivia
-
 
 dubiousFact :: ConcM App ()
 dubiousFact = do

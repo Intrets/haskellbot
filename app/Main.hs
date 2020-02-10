@@ -63,4 +63,5 @@ run = do
     , listenEvent
     , burselfParrotCommandM
     , dicegolfCommandM
+    , randomFactCommandM
     ]
