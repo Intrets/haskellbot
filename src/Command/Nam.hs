@@ -30,6 +30,9 @@ spaghetti = TE.decodeUtf8 "\195\176\194\159\194\141\194\157"
 ok_hand :: StringType
 ok_hand = TE.decodeUtf8 "\195\176\194\159\194\145\194\140"
 
+exclamation :: StringType
+exclamation = TE.decodeUtf8 "\195\162\194\157\194\151"
+
 parseNamLine :: StringType -> NamWord
 parseNamLine line =
   let
@@ -63,7 +66,10 @@ namCountingM = do
     NamWord word_ stylizedMessage_ <- pick nams
     return
       ( word_
-      , stylizedMessage_ <> T.pack (printf " (%d POINTS :exclamation: )" count)
+      , stylizedMessage_
+      <> T.pack (printf " (%d POINTS " count)
+      <> exclamation
+      <> " )"
       )
   messageM msg
   namBountyM count word_
