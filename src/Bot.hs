@@ -21,7 +21,7 @@ import Data.Time.Clock.POSIX
 
 import Network.HTTP.Client
 
-import Control.Concurrent.STM.TQueue
+import Control.Concurrent.STM.TBQueue
 import Control.Concurrent.MVar
 import Data.Ord (comparing)
 
@@ -36,7 +36,7 @@ data Options = Options
   , httpsManager :: Manager
   , catFacts :: A.Array Int StringType
   , namWords :: A.Array Int NamWord
-  , messageQueue :: TQueue (StringType, MVar Bool)
+  , messageQueue :: TBQueue (StringType, MVar Bool)
   }
 
 data NamWord = NamWord

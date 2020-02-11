@@ -85,7 +85,6 @@ encodeM = do
     (\(EventResult _ (ChatCommandResult m)) -> m)
   let s = T.unwords . tail $ words
   messageM $ T.pack . show . TE.encodeUtf8 $ s
-  encodeM
 
 golf :: StringType
 golf = TE.decodeUtf8 "\195\162\194\155\194\179"

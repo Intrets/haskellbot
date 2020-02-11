@@ -171,7 +171,7 @@ runConcM q_ = do
         msgQ <- asks messageQueue
         sem  <- liftIO newEmptyMVar
         void . liftIO . forkIO $ do
-          atomically $ writeTQueue msgQ (txt, sem)
+          atomically $ writeTBQueue msgQ (txt, sem)
           _ <- takeMVar sem
           atomically $ writeTQueue queue' (cont b)
 

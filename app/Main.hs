@@ -25,7 +25,7 @@ import System.Random
 import Network.HTTP.Client
 import Network.HTTP.Client.TLS
 
-import Control.Concurrent.STM.TQueue
+import Control.Concurrent.STM.TBQueue
 
 import Conc
 
@@ -42,7 +42,7 @@ main = do
   s      <- getStdGen
   facts  <- loadFacts (factsFile config)
   nams   <- loadNams (namFile config)
-  mQueue <- liftIO newTQueueIO
+  mQueue <- liftIO $ newTBQueueIO 3
   let opt = Options b config db man facts nams mQueue
   bracket (pure opt) disconnect (loop s)
  where
