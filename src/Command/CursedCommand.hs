@@ -9,7 +9,6 @@
 module Command.CursedCommand
   ( FactDbResponse()
   , FactResult()
-  , dubiousFact
   , activateTrivia
   )
 where
@@ -44,23 +43,21 @@ dubiousFactTrivia :: ConcM App ()
 dubiousFactTrivia = do
   man   <- pureM $ asks httpsManager
   fetch <- taskM $ do
-    -- man <- newManager tlsManagerSettings
     let req = "http://opentdb.com/api.php?amount=1&type=boolean&encode=base64"
     jsonResult <- httpLbs req man
     print $ B64.decode . B.toStrict . responseBody $ jsonResult
     case statusCode . responseStatus $ jsonResult of
       200 -> do
-        let
-          response = decode (responseBody $ jsonResult) :: Maybe FactDbResponse
+        let response = decode (responseBody jsonResult) :: Maybe FactDbResponse
+        print response
         return $ fmap results response
       _ -> return Nothing
-  -- let fetch = Just . pure $ FactResult "" "" "" "test question" "test" ["test"]
   case fetch of
     Nothing           -> activateTrivia
     Just []           -> activateTrivia
     Just (result : _) -> do
       let answer = unwrap $ correct_answer result
-      pureM $ queueMessage . unwrap . question $ result
+      messageM $ unwrap . question $ result
       u <- awaitMLoop
         [ChatCommand "True", ChatCommand "False"]
         10000
@@ -73,35 +70,11 @@ dubiousFactTrivia = do
         )
       case u of
         Nothing ->
-          pureM
-            $  queueMessage
+          messageM
             $  "the correct answer was "
             <> (unwrap . correct_answer $ result)
-        Just m ->
-          pureM
-            $  queueMessage
-            $  (displayName . user $ m)
-            <> " answered correctly"
+        Just m -> messageM $ (displayName . user $ m) <> " answered correctly"
       activateTrivia
-
-dubiousFact :: ConcM App ()
-dubiousFact = do
-  cont <- taskM $ do
-    man <- newManager tlsManagerSettings
-    let req = "http://opentdb.com/api.php?amount=1&type=boolean"
-    jsonResult <- httpLbs req man
-    case statusCode . responseStatus $ jsonResult of
-      200 -> do
-        let response = decode (responseBody jsonResult) :: Maybe FactDbResponse
-        case response of
-          Nothing -> return Nothing
-          Just (results -> L.head -> question -> factResult) ->
-            return $ Just $ pureM $ do
-              queueMessage . unwrap $ factResult
-      _ -> return Nothing
-  case cont of
-    Nothing -> return ()
-    Just c  -> c
 
 data FactDbResponse = FactDbResponse
   { response_code :: Int

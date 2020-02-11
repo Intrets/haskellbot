@@ -14,7 +14,7 @@ class (Monad m) =>
 instance RandomGenerator App where
   randRange low high
     | low > high = App $ pure low
-    | otherwise  = App . lift . lift $ (state $ randomR (low, high))
+    | otherwise  = App . lift . lift $ state (randomR (low, high))
   pick array = do
     let range = A.bounds array
     i <- uncurry randRange range

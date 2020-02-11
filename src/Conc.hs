@@ -13,6 +13,7 @@ module Conc where
 import Bot
 import Control.Concurrent
 import Control.Concurrent.STM
+import Control.Concurrent.STM.TSem
 import Control.Monad
 import Control.Monad.IO.Class
 import Data.Text as T
@@ -21,6 +22,7 @@ import qualified Data.HashMap.Strict as M
 import Data.Hashable
 import GHC.Generics
 import Data.Maybe (catMaybes)
+import Control.Monad.Reader
 
 data Wat = Int
 
@@ -39,6 +41,7 @@ data Action m b
   | ActionAwait [Event] Int (EventResult -> b)
   | forall s. ActionAwaitLoop [Event] Int s (EventResult -> State s (Maybe b))
   | ActionSend EventResult b
+  | ActionMessage StringType b
 
 awaitMLoop
   :: [Event] -> Int -> s -> (EventResult -> State s (Maybe a)) -> ConcM m a
@@ -84,6 +87,9 @@ pureM x = Task (ActionPure x) EndM
 taskM :: IO c -> ConcM m c
 taskM x = Task (ActionIO x) EndM
 
+messageM :: StringType -> ConcM m ()
+messageM msg = Task (ActionMessage msg ()) EndM
+
 getChan
   :: [Event]
   -> M.HashMap Event (TChan EventResult)
@@ -127,7 +133,7 @@ sendEvent channels r@(EventResult event _) = do
     Nothing -> return ()
     Just c  -> atomically $ writeTChan c r
 
-runConcM :: (Monad a, MonadIO a) => [ConcM a ()] -> a ()
+runConcM :: (Monad a, MonadIO a, MonadReader Options a) => [ConcM a ()] -> a ()
 runConcM q_ = do
   queue' <- liftIO . atomically $ do
     q <- newTQueue
@@ -161,6 +167,13 @@ runConcM q_ = do
       Task (ActionSend event b) cont -> do
         liftIO $ sendEvent channels event
         liftIO $ atomically $ writeTQueue queue' (cont b)
+      Task (ActionMessage txt b) cont -> do
+        msgQ <- asks messageQueue
+        sem  <- liftIO newEmptyMVar
+        void . liftIO . forkIO $ do
+          atomically $ writeTQueue msgQ (txt, sem)
+          _ <- takeMVar sem
+          atomically $ writeTQueue queue' (cont b)
 
 listen :: IO EventResult -> s -> (EventResult -> State s (Maybe b)) -> IO b
 listen h s events = do

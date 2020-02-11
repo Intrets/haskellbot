@@ -24,21 +24,25 @@ import System.Random
 import Network.HTTP.Client
 import Network.HTTP.Client.TLS
 
+import Control.Concurrent.STM.TQueue
+
 import Conc
 
-messageQueue :: MessageQueue
-messageQueue = MessageQueue 0 emptyQueue
+messageQueue' :: MessageQueue
+messageQueue' = MessageQueue 0 emptyQueue
 
 main :: IO ()
 main = do
   setLocaleEncoding utf8
-  --hSetBuffering stdout NoBuffering
   config <- parseConfigFile . cfgFile =<< execParser clOptionsParser
   b      <- connect (T.unpack $ ircServer config) (ircPort config)
   man    <- newManager tlsManagerSettings
   let db = Database (dbFile config)
-  s   <- getStdGen
-  opt <- Options b config db man <$> loadFacts (factsFile config)
+  s      <- getStdGen
+  facts  <- loadFacts (factsFile config)
+  nams   <- loadNams (namFile config)
+  mQueue <- liftIO newTQueueIO
+  let opt = Options b config db man facts nams mQueue
   bracket (pure opt) disconnect (loop s)
  where
   disconnect opts = do
@@ -47,7 +51,7 @@ main = do
   loop :: StdGen -> Options -> IO ()
   loop s opts = do
     _ <-
-      flip runStateT messageQueue
+      flip runStateT messageQueue'
       . flip runStateT  M.empty
       . flip runStateT  s
       . flip runStateT  M.empty
@@ -59,11 +63,12 @@ run :: App ()
 run = do
   botJoin
   runConcM
-    [ messageDispensingLoopM
-    , activateTrivia
+    [ activateTrivia
     , listenEvent
     , burselfParrotCommandM
     , dicegolfCommandM
     , randomFactCommandM
     , namCountingM
+    , messageDispensingLoopM2
+    , getPointsM
     ]

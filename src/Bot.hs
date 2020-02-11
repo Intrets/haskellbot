@@ -21,6 +21,10 @@ import Data.Time.Clock.POSIX
 
 import Network.HTTP.Client
 
+import Control.Concurrent.STM.TQueue
+import Control.Concurrent.MVar
+import Data.Ord (comparing)
+
 newtype Bot = Bot
   { botSocket :: Handle
   }
@@ -31,6 +35,13 @@ data Options = Options
   , databaseOptions :: Database
   , httpsManager :: Manager
   , catFacts :: A.Array Int StringType
+  , namWords :: A.Array Int NamWord
+  , messageQueue :: TQueue (StringType, MVar Bool)
+  }
+
+data NamWord = NamWord
+  { word :: StringType
+  , stylizedMessage :: StringType
   }
 
 data ProgramOptions = ProgramOptions
@@ -41,6 +52,7 @@ data ProgramOptions = ProgramOptions
   , ircOauth :: StringType
   , dbFile :: StringType
   , factsFile :: StringType
+  , namFile :: StringType
   }
 
 newtype Database = Database
@@ -55,6 +67,9 @@ data User = User
   { userID :: Int
   , displayName :: StringType
   } deriving (Show, Eq)
+
+instance Ord User where
+  compare = comparing userID
 
 instance Hashable User where
   hashWithSalt salt = hashWithSalt salt . userID

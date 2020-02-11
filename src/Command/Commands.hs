@@ -18,7 +18,22 @@ import Data.Time.Clock.POSIX
 import MessageQueue
 import Text.Read (readMaybe)
 import Control.Monad.State.Lazy
+import Bot.Database.Helpers
+import Text.Printf
 
+
+getPointsM :: ConcM App ()
+getPointsM = do
+  user <- awaitM
+    [ChatCommand "!points"]
+    0
+    (\(EventResult _ (ChatCommandResult m)) -> user m)
+  points <- pureM $ getPoints (Left $ userID user)
+  case points of
+    Nothing -> return ()
+    Just p ->
+      messageM $ displayName user <> T.pack (printf " has %d NaM points." p)
+  getPointsM
 
 runCommandM :: Message -> ConcM App ()
 runCommandM message@(Message _ usr) = do
@@ -41,13 +56,13 @@ runCommandM message@(Message _ usr) = do
 burselfParrotCommandM :: ConcM App ()
 burselfParrotCommandM = do
   _ <- awaitM_ [ChatCommand "bUrself"] 0
-  pureM $ queueMessage "bUrself"
+  messageM "bUrself"
   burselfParrotCommandM
 
 randomFactCommandM :: ConcM App ()
 randomFactCommandM = do
   _ <- awaitM_ [ChatCommand "!f", ChatCommand "!fact"] 0
-  pureM $ queueMessage =<< randomFact
+  messageM =<< pureM randomFact
   randomFactCommandM
 
 dicegolfCommandM :: ConcM App ()
@@ -62,7 +77,7 @@ dicegolfCommandM = do
           _           -> Nothing
       _ -> Nothing
     )
-  pureM $ dicegolf m >>= queueMessage . formatDicegolfResult
+  pureM (dicegolf m) >>= (messageM . formatDicegolfResult)
   dicegolfCommandM
 
 golf :: StringType

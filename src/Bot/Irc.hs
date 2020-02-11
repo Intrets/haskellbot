@@ -48,10 +48,7 @@ parseTags t = Message (T.words m) (User id' name)
 listenEvent :: ConcM App ()
 listenEvent = do
   handle <- pureM $ asks (botSocket . bot)
-  line   <- taskM $ do
-    l <- T.hGetLine handle
-    print l
-    return l
+  line   <- taskM $ T.hGetLine handle
   forkM [listenEvent]
   let message = parseTags line
   if
@@ -61,7 +58,7 @@ listenEvent = do
       []      -> return ()
       (h : _) -> do
         sendM (ChatCommand h) (ChatCommandResult message)
-        mapM_ (\h' -> sendM (ChatWord h') (ChatCommandResult message))
+        mapM_ (\h' -> sendM (ChatWord h') (ChatWordResult message))
           $ messageWords message
 
 
