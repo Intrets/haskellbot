@@ -5,6 +5,7 @@ import Bot.Catfacts
 import Bot.Irc
 import Bot.Irc.Connection
 import Bot.Irc.Send
+import Bot.Database.Helpers
 import Bot.Options.Parse
 import Command.CursedCommand
 import Command.Commands
@@ -61,6 +62,7 @@ main = do
 
 run :: App ()
 run = do
+  initializeDB
   botJoin
   runConcM
     [ activateTrivia
@@ -71,4 +73,5 @@ run = do
     , namCountingM
     , messageDispensingLoopM2
     , getPointsM
+    , encodeM
     ]

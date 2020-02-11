@@ -23,13 +23,10 @@ import Conc
 import Data.Aeson
 
 import Network.HTTP.Client
-import Network.HTTP.Client.TLS
 import Network.HTTP.Types.Status
 import qualified Data.ByteString.Base64 as B64
 
-import MessageQueue
 import Data.Text as T
-import qualified Data.List as L (head)
 import Data.Either (fromRight)
 
 import Control.Monad.Reader
@@ -64,7 +61,7 @@ dubiousFactTrivia = do
         ()
         (\case
           EventResult (ChatCommand x) (ChatCommandResult usr) ->
-            if answer == x then return $ Just . Just $ usr else return $ Nothing
+            if answer == x then return $ Just . Just $ usr else return Nothing
           EventResult Timeout TimeoutResult -> return $ Just Nothing
           _ -> return Nothing
         )
@@ -90,7 +87,7 @@ data FactResult = FactResult
   , incorrect_answers :: [StringTypeSynonym]
   } deriving (Show, Eq, Generic)
 
-data StringTypeSynonym = StringTypeSynonym {unwrap :: StringType } deriving (Show, Eq)
+newtype StringTypeSynonym = StringTypeSynonym {unwrap :: StringType } deriving (Show, Eq)
 
 instance FromJSON StringTypeSynonym where
   parseJSON =

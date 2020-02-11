@@ -12,14 +12,14 @@ import Conc
 import Data.List (intercalate)
 import Data.Maybe (fromMaybe)
 import Data.Monoid ((<>))
-import qualified Data.Text as T (pack, unpack)
+import qualified Data.Text as T (pack, unpack, unwords)
 import qualified Data.Text.Encoding as TE
 import Data.Time.Clock.POSIX
-import MessageQueue
 import Text.Read (readMaybe)
 import Control.Monad.State.Lazy
 import Bot.Database.Helpers
 import Text.Printf
+import qualified Data.ByteString.Char8 as B8
 
 
 getPointsM :: ConcM App ()
@@ -28,11 +28,8 @@ getPointsM = do
     [ChatCommand "!points"]
     0
     (\(EventResult _ (ChatCommandResult m)) -> user m)
-  points <- pureM $ getPoints (Left $ userID user)
-  case points of
-    Nothing -> return ()
-    Just p ->
-      messageM $ displayName user <> T.pack (printf " has %d NaM points." p)
+  points <- pureM $ fromMaybe (0 :: Int) <$> getPoints (Left $ userID user)
+  messageM $ displayName user <> T.pack (printf " has %d NaM points." points)
   getPointsM
 
 runCommandM :: Message -> ConcM App ()
@@ -79,6 +76,16 @@ dicegolfCommandM = do
     )
   pureM (dicegolf m) >>= (messageM . formatDicegolfResult)
   dicegolfCommandM
+
+encodeM :: ConcM App ()
+encodeM = do
+  Message words _ <- awaitM
+    [ChatCommand "!encode"]
+    0
+    (\(EventResult _ (ChatCommandResult m)) -> m)
+  let s = T.unwords . tail $ words
+  messageM $ T.pack . show . TE.encodeUtf8 $ s
+  encodeM
 
 golf :: StringType
 golf = TE.decodeUtf8 "\195\162\194\155\194\179"

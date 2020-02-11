@@ -8,9 +8,9 @@ import Bot
 import Bot.Database.Helpers
 import Conc
 import Control.Monad.State.Lazy
-import MessageQueue
 import Bot.Random
 
+import qualified Data.Text.Encoding as TE
 import qualified Data.Text as T
 import qualified Data.Text.IO as T (readFile)
 
@@ -21,15 +21,24 @@ import qualified Data.Set as S
 
 import Control.Monad.Reader
 
+point_right :: StringType
+point_right = TE.decodeUtf8 "\195\176\194\159\194\145\194\137"
+
+spaghetti :: StringType
+spaghetti = TE.decodeUtf8 "\195\176\194\159\194\141\194\157"
+
+ok_hand :: StringType
+ok_hand = TE.decodeUtf8 "\195\176\194\159\194\145\194\140"
+
 parseNamLine :: StringType -> NamWord
 parseNamLine line =
   let
     [lang, wrd] = T.splitOn ": " line
-    s           = T.intersperse ' ' . T.replace "NAM" "___" . T.toUpper $ wrd
+    s           = T.replace "NAM" " _ _ _ " . T.toUpper $ wrd
     prefix      = case lang of
-      "english" -> "NaM :point_right: "
-      "italian" -> ":spaghetti: :ok_hand: NaM :point_right: "
-      _         -> "NaM :point_right: "
+      "english" -> "NaM " <> point_right <> " "
+      "italian" -> spaghetti <> " " <> ok_hand <> " NaM " <> point_right
+      _         -> ""
   in NamWord wrd (prefix <> s)
 
 loadNams :: StringType -> IO (A.Array Int NamWord)
@@ -60,7 +69,11 @@ namCountingM = do
   namBountyM count word_
 
 valid :: [StringType] -> StringType -> Bool
-valid wrds wrd = let s = T.toLower . T.concat $ wrds in s == wrd
+valid wrds wrd =
+  let
+    s = T.toLower . T.concat $ wrds
+    t = T.toLower . T.concat . T.words $ wrd
+  in s == t
 
 namBountyM :: Int -> StringType -> ConcM App ()
 namBountyM count wrd = do
