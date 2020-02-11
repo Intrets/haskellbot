@@ -42,7 +42,7 @@ namCountingM = do
   awaitM_ [ChatWord "NaM"] 0
   count <- awaitMLoop
     [ChatWord "NaM"]
-    1000
+    5000
     (1 :: Int)
     (\case
       EventResult (ChatWord _) _ -> modify succ >> return Nothing
