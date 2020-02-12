@@ -9,7 +9,7 @@ import Bot
 import Bot.Random
 
 import qualified Data.Text as T
-import Data.List (sort)
+import Data.List (sort, partition)
 import qualified Data.Map as M
 import Control.Monad.State
 import Control.Concurrent
@@ -57,7 +57,7 @@ triviaM triviaInfo = do
       "hard"   -> 30
       _        -> 10
   answers <- awaitMLoop
-    [ChatCommand correctOption, ChatCommand (T.toLower correctOption)]
+    (map (ChatCommand . T.pack . pure) $ take 4 ['A' ..])
     (difficultyTime * 1000)
     (M.empty :: M.Map User StringType)
     (\case
@@ -78,7 +78,7 @@ triviaM triviaInfo = do
         . M.toList
         $ answers
     (length -> correctCount, length -> incorrectCount) =
-      span ((== 1) . snd) pointModifiers
+      partition ((== 1) . snd) pointModifiers
   messageM
     $  "The correct answer was: "
     <> correct
