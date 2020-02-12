@@ -30,7 +30,7 @@ getPointsM = do
   (namPoints, triviaPoints) <- pureM $ fromMaybe (0, 0) <$> getPoints
     (Left $ userID user)
   messageM $ displayName user <> T.pack
-    (printf " has %d NaM points and %d trivia points" namPoints triviaPoints)
+    (printf " has %d NaM points and %d trivia points." namPoints triviaPoints)
   getPointsM
 
 runCommandM :: Message -> ConcM App ()

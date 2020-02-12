@@ -73,14 +73,20 @@ triviaM triviaInfo = do
       _ -> gets Just
     )
   let
-    correctAnswers =
-      map fst . filter ((== correctOption) . snd) . M.toList $ answers
+    pointModifiers =
+      map (\(user, answer) -> (user, if answer == correctOption then 1 else -1))
+        . M.toList
+        $ answers
+    (length -> correctCount, length -> incorrectCount) =
+      span ((== 1) . snd) pointModifiers
   messageM
     $  "The correct answer was: "
     <> correct
-    <> " awarding points to "
-    <> (T.pack . show . length $ correctAnswers)
+    <> ". awarding points to "
+    <> (T.pack . show $ correctCount)
+    <> " users and taking points from "
+    <> (T.pack . show $ incorrectCount)
     <> " users."
   db <- pureM $ asks databaseOptions
-  taskM $ multipleGiveTriviaPoints db $ zip correctAnswers (repeat 1)
+  taskM $ multipleGiveTriviaPoints db pointModifiers
 
