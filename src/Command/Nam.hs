@@ -94,7 +94,7 @@ namBountyM count wrd = do
       _ -> Just <$> get
     )
   db <- pureM $ asks databaseOptions
-  taskM $ multipleGivePoints db $ zip r (repeat count)
+  taskM $ multipleGiveNamPoints db $ zip r (repeat count)
 
 
 

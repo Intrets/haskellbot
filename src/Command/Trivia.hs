@@ -14,6 +14,8 @@ import qualified Data.Map as M
 import Control.Monad.State
 import Control.Concurrent
 import Control.Monad
+import Control.Monad.Reader
+import Bot.Database.Helpers
 
 prepareAnswers :: TdbResult -> ConcM App (StringType, StringType, StringType)
 prepareAnswers triviaInfo =
@@ -70,5 +72,15 @@ triviaM triviaInfo = do
           return Nothing
       _ -> gets Just
     )
-  messageM $ "The correct answer was: " <> correct
+  let
+    correctAnswers =
+      map fst . filter ((== correctOption) . snd) . M.toList $ answers
+  messageM
+    $  "The correct answer was: "
+    <> correct
+    <> " awarding points to "
+    <> (T.pack . show . length $ correctAnswers)
+    <> " users."
+  db <- pureM $ asks databaseOptions
+  taskM $ multipleGiveTriviaPoints db $ zip correctAnswers (repeat 1)
 

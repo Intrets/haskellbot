@@ -21,15 +21,16 @@ import Bot.Database.Helpers
 import Text.Printf
 import qualified Data.ByteString.Char8 as B8
 
-
 getPointsM :: ConcM App ()
 getPointsM = do
   user <- awaitM
-    [ChatCommand "!points"]
+    [ChatCommand "!nampoints"]
     0
     (\(EventResult _ (ChatCommandResult m)) -> user m)
-  points <- pureM $ fromMaybe (0 :: Int) <$> getPoints (Left $ userID user)
-  messageM $ displayName user <> T.pack (printf " has %d NaM points." points)
+  (namPoints, triviaPoints) <- pureM $ fromMaybe (0, 0) <$> getPoints
+    (Left $ userID user)
+  messageM $ displayName user <> T.pack
+    (printf " has %d NaM points and %d trivia points" namPoints triviaPoints)
   getPointsM
 
 runCommandM :: Message -> ConcM App ()
