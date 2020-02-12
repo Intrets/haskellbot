@@ -11,6 +11,7 @@ import Command.CursedCommand
 import Command.Commands
 import MessageQueue
 import Command.Nam
+import Command.Trivia
 
 import Control.Exception -- base
 import Control.Monad.Reader
@@ -74,4 +75,5 @@ run = do
     , messageDispensingLoopM2
     , getPointsM
     , encodeM
+    , triviaCommandM
     ]

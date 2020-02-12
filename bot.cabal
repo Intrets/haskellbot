@@ -44,6 +44,8 @@ library
                   Command.Commands
                   Command.RenameUtils
                   Command.CursedCommand
+                  OpentdbHelpers
+                  Command.Trivia
   hs-source-dirs:
       src
   build-depends:
