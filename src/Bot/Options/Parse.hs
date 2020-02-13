@@ -42,6 +42,7 @@ parseConfigFile pth = do
       (getOption "ircChannel")
       (getOption "ircNick")
       (getOption "ircOauth")
+      (getOption "clientID")
       (getOption "dbFile")
       (getOption "factsFile")
       (getOption "namFile")

@@ -50,6 +50,7 @@ data ProgramOptions = ProgramOptions
   , ircChannel :: StringType
   , ircNick :: StringType
   , ircOauth :: StringType
+  , clientID :: StringType
   , dbFile :: StringType
   , factsFile :: StringType
   , namFile :: StringType
@@ -87,7 +88,8 @@ data CommandOptions = CommandOptions
   , idVerification :: !(Int -> Bool)
   }
 
-type CommandCooldowns = M.HashMap StringType POSIXTime
+--type CommandCooldowns = M.HashMap StringType POSIXTime
+type ChannelOnline = Bool
 
 type UserCooldowns = M.HashMap User POSIXTime
 
@@ -99,7 +101,7 @@ data MessageQueue = MessageQueue
   }
 
 newtype App a = App
-  { runApp :: ReaderT Options (StateT CommandCooldowns (StateT StdGen (StateT UserCooldowns (StateT MessageQueue IO)))) a
+  { runApp :: ReaderT Options (StateT ChannelOnline (StateT StdGen (StateT UserCooldowns (StateT MessageQueue IO)))) a
   } deriving (Monad, Functor, Applicative, OptionsConfig, MonadIO)
 
 (!?) :: [a] -> Int -> Maybe a

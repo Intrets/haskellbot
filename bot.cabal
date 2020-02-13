@@ -46,6 +46,7 @@ library
                   Command.CursedCommand
                   OpentdbHelpers
                   Command.Trivia
+                  Bot.OnlineChecker
   hs-source-dirs:
       src
   build-depends:
@@ -68,6 +69,7 @@ library
               , http-client
               , http-client-tls
               , http-types
+              , http-conduit
               , time
               , aeson
               , transformers

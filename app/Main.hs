@@ -7,6 +7,7 @@ import Bot.Irc.Connection
 import Bot.Irc.Send
 import Bot.Database.Helpers
 import Bot.Options.Parse
+import Bot.OnlineChecker
 import Command.CursedCommand
 import Command.Commands
 import MessageQueue
@@ -56,7 +57,7 @@ main = do
       flip runStateT messageQueue'
       . flip runStateT  M.empty
       . flip runStateT  s
-      . flip runStateT  M.empty
+      . flip runStateT  True
       . flip runReaderT opts
       $ runApp run
     return ()
@@ -76,4 +77,5 @@ run = do
     , getPointsM
     , encodeM
     , triviaCommandM
+    , onlineBlocker
     ]

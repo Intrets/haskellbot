@@ -33,26 +33,12 @@ checkUserOnCooldown command usr time =
         Just r  -> return r
     else return False
 
-checkCommandOnCooldown :: Command m -> User -> POSIXTime -> App Bool
-checkCommandOnCooldown command usr time =
-  if requireGlobalCooldown . options $ command
-    then do
-      commandCooldowns <- commandLift get
-      case (> time) <$> M.lookup (name command) commandCooldowns of
-        Nothing -> return False
-        Just r  -> return r
-    else return False
-
 instance CommandCooldownHandler App where
   isOnCooldown command usr time = do
     u <- checkUserOnCooldown command usr time
-    c <- checkCommandOnCooldown command usr time
-    return $ not (u && c)
+    return $ not u
   putOnCooldown command usr = do
     time <- liftIO getPOSIXTime
-    commandLift $ modify $ M.insert
-      (name command)
-      ((time +) $ globalCooldown . options $ command)
     userLift $ modify $ M.insert
       usr
       ((time +) $ userCooldown . options $ command)
