@@ -38,10 +38,7 @@ onlineBlocker = do
             )
           & parseRequest_
           & setRequestHeader "Client-ID" [B.pack . T.unpack $ clientID]
-    print req
-    x <- httpLbs req man
-    print $ length . LB.unpack $ responseBody x
-    return x
+    httpLbs req man
   let
     online = case statusCode . responseStatus $ result of
       200 -> case length . LB.unpack . responseBody $ result of
