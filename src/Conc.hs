@@ -158,11 +158,13 @@ runConcM q_ = do
         liftIO $ atomically $ writeTQueue queue' (cont a)
       Task (ActionAwaitLoop events timeout s action) cont ->
         void . liftIO . forkIO $ do
-          a <- listen (join $ subscribe events channels timeout) s action
+          sub <- subscribe events channels timeout
+          a   <- listen sub s action
           liftIO $ atomically $ writeTQueue queue' (cont a)
-      Task (ActionAwait events timout action) cont ->
+      Task (ActionAwait events timeout action) cont ->
         void . liftIO . forkIO $ do
-          a <- join $ subscribe events channels timout
+          sub <- subscribe events channels timeout
+          a   <- sub
           liftIO $ atomically $ writeTQueue queue' (cont . action $ a)
       Task (ActionSend event b) cont -> do
         liftIO $ sendEvent channels event
