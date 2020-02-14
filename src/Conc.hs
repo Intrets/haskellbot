@@ -116,13 +116,13 @@ subscribe
   :: [Event]
   -> TVar (M.HashMap Event (TChan EventResult))
   -> Int
-  -> IO EventResult
+  -> IO (IO EventResult)
 subscribe events channels timeout = do
   timeoutChan              <- getTimeOutChan timeout
   chans                    <- readTVarIO channels
   (listenChannels, chans2) <- getChan events chans
   atomically $ writeTVar channels chans2
-  atomically $ Prelude.foldl1
+  return $ atomically $ Prelude.foldl1
     orElse
     (Prelude.map readTChan (catMaybes [timeoutChan] ++ listenChannels))
 
@@ -158,11 +158,11 @@ runConcM q_ = do
         liftIO $ atomically $ writeTQueue queue' (cont a)
       Task (ActionAwaitLoop events timeout s action) cont ->
         void . liftIO . forkIO $ do
-          a <- listen (subscribe events channels timeout) s action
+          a <- listen (join $ subscribe events channels timeout) s action
           liftIO $ atomically $ writeTQueue queue' (cont a)
       Task (ActionAwait events timout action) cont ->
         void . liftIO . forkIO $ do
-          a <- subscribe events channels timout
+          a <- join $ subscribe events channels timout
           liftIO $ atomically $ writeTQueue queue' (cont . action $ a)
       Task (ActionSend event b) cont -> do
         liftIO $ sendEvent channels event

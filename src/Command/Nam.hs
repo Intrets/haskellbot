@@ -52,6 +52,7 @@ loadNams pth = do
 namCountingM :: ConcM App ()
 namCountingM = do
   awaitM_ [ChatWord "NaM"] 0
+  pureM $ liftIO $ print "new nam"
   count <- awaitMLoop
     [ChatWord "NaM"]
     5000
