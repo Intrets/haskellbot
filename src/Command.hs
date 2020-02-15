@@ -17,7 +17,6 @@ data Command a = Command
   , action :: Message -> ConcM a ()
   }
 
-
 class (Monad m) =>
       CommandCooldownHandler m where
   isOnCooldown :: Command a -> User -> POSIXTime -> m Bool

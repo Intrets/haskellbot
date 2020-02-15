@@ -17,6 +17,7 @@ messageDispensingLoopM2 = do
   (msgQ   , online) <- pureM $ (,) <$> asks messageQueue <*> isOnline
   (message, sem   ) <- taskM $ atomically $ readTBQueue msgQ
   pureM $ do
+    liftIO $ print $ "channel online: " ++ show online
     unless online $ privmsg message
     liftIO $ putMVar sem True
   taskM $ threadDelay 2000000
