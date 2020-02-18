@@ -32,10 +32,9 @@ onlineBlocker = do
     <*> asks (programOptions >>> clientID)
   result <- taskM $ do
     let
+      chan = T.tail channel
       req =
-        T.unpack
-            ("https://api.twitch.tv/helix/streams?user_login=" <> T.tail channel
-            )
+        T.unpack ("https://api.twitch.tv/helix/streams?user_login=" <> chan)
           & parseRequest_
           & setRequestHeader "Client-ID" [B.pack . T.unpack $ clientID]
     httpLbs req man
