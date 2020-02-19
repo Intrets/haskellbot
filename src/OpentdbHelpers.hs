@@ -60,7 +60,7 @@ instance FromJSON TdbResult where
 instance FromJSON OpentdbResponse
 
 opentdbQuery :: StringType -> Int -> ConcM App (Maybe [TdbResult])
-opentdbQuery queryType (max 1 . min 50 -> count) = do
+opentdbQuery queryType (max 1 . min 1 -> count) = do
   man <- pureM $ asks httpsManager
   taskM $ do
     let
@@ -75,10 +75,12 @@ opentdbQuery queryType (max 1 . min 50 -> count) = do
       Nothing -> return Nothing
       Just r  -> do
         jsonResult <- httpLbs r man
+        print jsonResult
         case statusCode . responseStatus $ jsonResult of
           200 -> do
             let
               response =
                 decode (responseBody jsonResult) :: Maybe OpentdbResponse
+            print response
             return $ fmap results response
           _ -> return Nothing
