@@ -60,7 +60,7 @@ instance FromJSON TdbResult where
 instance FromJSON OpentdbResponse
 
 opentdbQuery :: StringType -> Int -> ConcM App (Maybe [TdbResult])
-opentdbQuery queryType (max 1 . min 1 -> count) = do
+opentdbQuery queryType (max 1 . min 50 -> count) = do
   man <- pureM $ asks httpsManager
   taskM $ do
     let
