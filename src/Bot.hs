@@ -4,26 +4,28 @@
 module Bot where
 
 -- import Conc
-import Control.Monad.Reader
-import qualified Data.HashMap.Strict as M
-import Data.Hashable
-import GHC.IO.Handle (Handle)
-import qualified Network.Socket as N (PortNumber)
-import Queue
+import           Control.Monad.Reader
+import qualified Data.HashMap.Strict           as M
+import           Data.Hashable
+import           GHC.IO.Handle                  ( Handle )
+import qualified Network.Socket                as N
+                                                ( PortNumber )
+import           Queue
 
-import Control.Monad.State.Strict
-import System.Random
+import           Control.Monad.State.Strict
+import           System.Random
 
-import qualified Data.Text as T (Text)
+import qualified Data.Text                     as T
+                                                ( Text )
 
-import qualified Data.Array as A
-import Data.Time.Clock.POSIX
+import qualified Data.Array                    as A
+import           Data.Time.Clock.POSIX
 
-import Network.HTTP.Client
+import           Network.HTTP.Client
 
-import Control.Concurrent.STM.TBQueue
-import Control.Concurrent.MVar
-import Data.Ord (comparing)
+import           Control.Concurrent.STM.TBQueue
+import           Control.Concurrent.MVar
+import           Data.Ord                       ( comparing )
 
 newtype Bot = Bot
   { botSocket :: Handle
@@ -54,6 +56,9 @@ data ProgramOptions = ProgramOptions
   , dbFile :: StringType
   , factsFile :: StringType
   , namFile :: StringType
+  , ircMessageLimit :: Int
+  , totalMessageLimit :: Int
+  , helixOauth :: StringType
   }
 
 newtype Database = Database

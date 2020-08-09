@@ -46,4 +46,7 @@ parseConfigFile pth = do
       (getOption "dbFile")
       (getOption "factsFile")
       (getOption "namFile")
+      (read . T.unpack $ getOption "ircMessageLimit")
+      (read . T.unpack $ getOption "totalMessageLimit")
+      (getOption "helixOauth")
   return res

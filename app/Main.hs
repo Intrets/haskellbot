@@ -1,35 +1,36 @@
 module Main where
 
-import Bot
-import Bot.Catfacts
-import Bot.Irc
-import Bot.Irc.Connection
-import Bot.Irc.Send
-import Bot.Database.Helpers
-import Bot.Options.Parse
-import Bot.OnlineChecker
-import Command.CursedCommand
-import Command.Commands
-import MessageQueue
-import Command.Nam
-import Command.Trivia
+import           Bot
+import           Bot.Catfacts
+import           Bot.Irc
+import           Bot.Irc.Connection
+import           Bot.Irc.Send
+import           Bot.Database.Helpers
+import           Bot.Options.Parse
+import           Bot.OnlineChecker
+import           Command.CursedCommand
+import           Command.Commands
+import           MessageQueue
+import           Command.Nam
+import           Command.Trivia
 
-import Control.Exception -- base
-import Control.Monad.Reader
-import Control.Monad.State.Strict
-import qualified Data.HashMap.Strict as M
-import qualified Data.Text as T (unpack)
-import GHC.IO.Encoding
-import Options.Applicative
-import Queue
-import System.IO --
-import System.Random
-import Network.HTTP.Client
-import Network.HTTP.Client.TLS
+import           Control.Exception -- base
+import           Control.Monad.Reader
+import           Control.Monad.State.Strict
+import qualified Data.HashMap.Strict           as M
+import qualified Data.Text                     as T
+                                                ( unpack )
+import           GHC.IO.Encoding
+import           Options.Applicative
+import           Queue
+import           System.IO --
+import           System.Random
+import           Network.HTTP.Client
+import           Network.HTTP.Client.TLS
 
-import Control.Concurrent.STM.TBQueue
+import           Control.Concurrent.STM.TBQueue
 
-import Conc
+import           Conc
 
 messageQueue' :: MessageQueue
 messageQueue' = MessageQueue 0 emptyQueue
@@ -77,5 +78,5 @@ run = do
     , getPointsM
     , encodeM
     , triviaCommandM
-    --, onlineBlocker
+    , onlineBlocker
     ]
