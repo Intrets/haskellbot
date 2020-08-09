@@ -18,8 +18,12 @@ messageDispensingLoopM2 = do
   taskM $ threadDelay 2000000
   (msgQ   , online) <- pureM $ (,) <$> asks messageQueue <*> isOnline
   (message, sem   ) <- taskM $ atomically $ readTBQueue msgQ
-  pureM $ do
-    when (T.length message < 500) $ privmsg message
-    --unless online $ privmsg message
-    liftIO $ putMVar sem True
+  let s = T.chunksOf 130 . T.take 260 $ message
+  forM_ (init s) $ \m ->
+    (pureM $ privmsg m) >> (taskM $ threadDelay 2000000)
+--  pureM $ do
+--    when (T.length message < 500) $ privmsg message
+--    --unless online $ privmsg message
+  pureM $ privmsg $ last s
+  taskM $ putMVar sem True
   forkM [messageDispensingLoopM2]
