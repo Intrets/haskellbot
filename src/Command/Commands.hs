@@ -59,7 +59,7 @@ burselfParrotCommandM = do
 
 randomFactCommandM :: ConcM App ()
 randomFactCommandM = do
-  _ <- awaitM_ [ChatCommand "!f", ChatCommand "!fact"] 0
+  _ <- awaitM_ [ChatCommand "!f", ChatCommand "!fact", ChatCommand "forsenScoots", ChatCommand "OMGScoots"] 0
   messageM =<< pureM randomFact
   randomFactCommandM
 

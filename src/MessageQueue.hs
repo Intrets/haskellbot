@@ -18,6 +18,7 @@ messageDispensingLoopM2 = do
   (msgQ   , online) <- pureM $ (,) <$> asks messageQueue <*> isOnline
   (message, sem   ) <- taskM $ atomically $ readTBQueue msgQ
   pureM $ do
-    unless online $ privmsg message
+    privmsg message
+    --unless online $ privmsg message
     liftIO $ putMVar sem True
   forkM [messageDispensingLoopM2]

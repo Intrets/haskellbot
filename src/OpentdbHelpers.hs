@@ -75,12 +75,10 @@ opentdbQuery queryType (max 1 . min 50 -> count) = do
       Nothing -> return Nothing
       Just r  -> do
         jsonResult <- httpLbs r man
-        print jsonResult
         case statusCode . responseStatus $ jsonResult of
           200 -> do
             let
               response =
                 decode (responseBody jsonResult) :: Maybe OpentdbResponse
-            print response
             return $ fmap results response
           _ -> return Nothing
