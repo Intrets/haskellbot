@@ -77,5 +77,5 @@ run = do
     , getPointsM
     , encodeM
     , triviaCommandM
-    , onlineBlocker
+    --, onlineBlocker
     ]

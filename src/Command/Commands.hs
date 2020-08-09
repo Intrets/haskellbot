@@ -71,7 +71,7 @@ dicegolfCommandM = do
     (\case
       EventResult (ChatCommand _) (ChatCommandResult (Message w _)) ->
         case w of
-          (_ : n : _) -> readMaybe . T.unpack $ n :: Maybe Int
+          (_ : n : _) -> readMaybe . T.unpack $ n :: Maybe Integer
           _           -> Nothing
       _ -> Nothing
     )
@@ -90,7 +90,7 @@ encodeM = do
 golf :: StringType
 golf = TE.decodeUtf8 "\195\162\194\155\194\179"
 
-formatDicegolfResult :: [Int] -> StringType
+formatDicegolfResult :: [Integer] -> StringType
 formatDicegolfResult throws =
   "Dicegolf " <> golf <> t <> golf <> (T.pack . show . pred . length $ throws)
   where t = T.pack . intercalate ", " . map show $ throws

@@ -36,7 +36,7 @@ instance RandomGenerator App where
         return ar
     return (A.elems ar)
 
-dicegolf :: (RandomGenerator m) => Int -> m [Int]
+dicegolf :: (RandomGenerator m) => Integer -> m [Integer]
 dicegolf 1 = return [1]
 dicegolf d = do
   roll <- randRange 1 d
