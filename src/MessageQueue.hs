@@ -17,13 +17,12 @@ import qualified Data.Text as T
 messageDispensingLoopM2 :: ConcM App ()
 messageDispensingLoopM2 = do
   taskM $ threadDelay 2000000
-  (msgQ, online, ircMessageLimit, totalMessageLimit) <- pureM
-    $ (,,,) <$> asks messageQueue
-    <*> isOnline
+  (msgQ, ircMessageLimit, totalMessageLimit) <- pureM
+    $ (,,) <$> asks messageQueue
     <*> asks (ircMessageLimit . programOptions)
     <*> asks (totalMessageLimit . programOptions)
   (message, sem) <- taskM $ atomically $ readTBQueue msgQ
-  --   let s = T.chunksOf 130 . T.take 260 $ message
+  online <- pureM isOnline 
   let (s, remain) =
         accumulateMessages (T.words message) ircMessageLimit totalMessageLimit
   let s2 =
