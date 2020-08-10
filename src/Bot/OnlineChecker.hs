@@ -40,6 +40,7 @@ onlineBlocker = do
           27 -> False
           _  -> True
         _   -> True
+  taskM $ print $ "putting bot " ++ if online then "offline" else "online"
   pureM $ App $ put online
   taskM $ threadDelay 120000000
   onlineBlocker

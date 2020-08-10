@@ -47,7 +47,7 @@ botJoin = do
   write "PASS" ("oauth:" <> oauth)
   nick <- asks (ircNick . programOptions)
   write "NICK" nick
-  write "USER" (nick <> " 0 * :tutorial bot")
+  write "USER" (nick <> " 8 * :" <> nick)
   chan <- asks (ircChannel . programOptions)
   write "JOIN"                    chan
   write "CAP REQ :twitch.tv/tags" chan
