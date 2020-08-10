@@ -55,8 +55,8 @@ accumulateMessages words messageLimit totalLimit
 
 accumulateWords :: [StringType] -> Int -> ([StringType], [StringType])
 accumulateWords [] _ = ([], [])
-accumulateWords (word:words) limit
-  | limit - (1 + T.length word) <= 0 = ([], words)
+accumulateWords w@(word:words) limit
+  | limit - (1 + T.length word) <= 0 = ([], w)
   | otherwise =
     let (a, b) = accumulateWords words (limit - (1 + T.length word))
     in (word:a, b)
