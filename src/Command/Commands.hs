@@ -12,7 +12,7 @@ import Conc
 import Data.List (intercalate)
 import Data.Maybe (fromMaybe)
 import Data.Monoid ((<>))
-import qualified Data.Text as T (pack, unpack, unwords)
+import qualified Data.Text as T (pack, unpack, unwords, init)
 import qualified Data.Text.Encoding as TE
 import Data.Time.Clock.POSIX
 import Text.Read (readMaybe)
@@ -20,6 +20,17 @@ import Control.Monad.State.Lazy
 import Bot.Database.Helpers
 import Text.Printf
 import qualified Data.ByteString.Char8 as B8
+
+getTopNammersM :: ConcM App ()
+getTopNammersM = do
+  awaitM_ 
+    [ChatCommand "!topnammers"]
+    10000
+  topNammers <- take 5 <$> pureM getTopNammers
+  let message = foldl1 (<>) $ map (\((User _ n), p) -> T.pack $ printf "%s %d, " n p) topNammers
+  let message2 = T.pack "NaM top 5 nammers: " <> (T.init . T.init $ message)
+  messageM message2 
+  getTopNammersM
 
 getPointsM :: ConcM App ()
 getPointsM = do

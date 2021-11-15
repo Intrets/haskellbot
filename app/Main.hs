@@ -79,4 +79,5 @@ run = do
     , encodeM
     , triviaCommandM
     , onlineBlocker
+    , getTopNammersM
     ]

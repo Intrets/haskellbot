@@ -1,12 +1,13 @@
 module Bot.Database.Helpers where
 
-import qualified Database.HDBC as Db
-import qualified Database.HDBC.Sqlite3 as Dbsqlite3
+import qualified Database.HDBC                 as Db
+import qualified Database.HDBC.Sqlite3         as Dbsqlite3
 
-import qualified Data.Text as T (unpack)
+import qualified Data.Text                     as T
+                                                ( unpack )
 
-import Bot
-import Control.Monad.Reader
+import           Bot
+import           Control.Monad.Reader
 
 type UserID = Int
 
@@ -27,6 +28,17 @@ initializeDB = do
     []
   liftIO $ Db.commit connection
   liftIO $ Db.disconnect connection
+
+getTopNammers
+  :: (OptionsConfig m, MonadIO m) => m [(User, Int)]
+getTopNammers = do
+  connection <- getConnection
+  result     <- liftIO $ Db.quickQuery
+    connection
+    "SELECT user_id, display_name, nam_points FROM users ORDER BY nam_points DESC LIMIT 10"
+    []
+  let parsed = map (\[user_id, name, points] -> (User (Db.fromSql user_id) (Db.fromSql name), Db.fromSql points)) result
+  return parsed 
 
 multipleGiveNamPoints :: Database -> [(User, Int)] -> IO ()
 multipleGiveNamPoints database t = do
