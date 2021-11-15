@@ -33,6 +33,9 @@ ok_hand = TE.decodeUtf8 "\195\176\194\159\194\145\194\140"
 exclamation :: StringType
 exclamation = TE.decodeUtf8 "\195\162\194\157\194\151"
 
+pinched_fingers :: StringType 
+pinched_fingers = TE.decodeUtf8 "\195\176\194\159\194\164\194\140"  
+
 parseNamLine :: StringType -> NamWord
 parseNamLine line =
   let
@@ -40,7 +43,7 @@ parseNamLine line =
     s           = T.replace "NAM" " _ _ _ " . T.toUpper $ wrd
     prefix      = case lang of
       "english" -> "NaM " <> point_right <> " "
-      "italian" -> spaghetti <> " " <> ok_hand <> " NaM " <> point_right
+      "italian" -> spaghetti <> " NaM " <> pinched_fingers
       _         -> ""
   in NamWord wrd (prefix <> s)
 
@@ -55,7 +58,7 @@ namCountingM = do
   pureM $ liftIO $ print "new nam"
   count <- awaitMLoop
     [ChatWord "NaM"]
-    5000
+    10000
     (1 :: Int)
     (\case
       EventResult (ChatWord _) _ -> modify succ >> return Nothing

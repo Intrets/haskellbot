@@ -35,11 +35,12 @@ onlineBlocker = do
               (B.pack . T.unpack $ ("Bearer " <> auth))
             & addRequestHeader "Client-ID" (B.pack . T.unpack $ client_id)
       httpLbs req man
-  let online = case statusCode . responseStatus $ result of
-        200 -> case length . LB.unpack . responseBody $ result of
-          27 -> False
-          _  -> True
-        _   -> True
+--   let online = case statusCode . responseStatus $ result of
+--         200 -> case length . LB.unpack . responseBody $ result of
+--           27 -> False
+--           _  -> True
+--         _   -> True
+  let online = False
   taskM . print
     $ "putting bot "
     ++ if online
